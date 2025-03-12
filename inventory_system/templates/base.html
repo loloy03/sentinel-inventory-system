@@ -1,30 +1,33 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="utf-8">
+  <head>
+    <meta charset="utf-8" />
     <title>{% block title %}Inventory System{% endblock %}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
     <header>
-        <h1>Inventory System</h1>
-        <nav>
-            <ul>
-                {% if user.is_authenticated %}
-                    <li><a href="{% url 'account:dashboard' %}">Dashboard</a></li>
-                    <li><a href="{% url 'logout' %}">Logout</a></li>
-                {% else %}
-                    <li><a href="{% url 'login' %}">Login</a></li>
-                {% endif %}
-            </ul>
-        </nav>
+      <h1>Inventory System</h1>
+      <nav>
+        <ul>
+        <li><a href="{% url 'admin:index' %}">Admin</a></li>
+          {% if user.is_authenticated %}
+          <li><a href="{% url 'account:dashboard' %}">Dashboard</a></li>
+          <div class="logout-section">
+            <form method="post" action="{% url 'logout' %}">
+              {% csrf_token %}
+              <button type="submit">Logout</button>
+            </form>
+          </div>
+          {% else %}
+          <li><a href="{% url 'login' %}">Login</a></li>
+          {% endif %}
+        </ul>
+      </nav>
     </header>
-    <main>
-        {% block content %}
-        {% endblock %}
-    </main>
+    <main>{% block content %} {% endblock %}</main>
     <footer>
-        <p>&copy; 2025 Inventory System</p>
+      <p>&copy; 2025 Inventory System</p>
     </footer>
-</body>
+  </body>
 </html>
