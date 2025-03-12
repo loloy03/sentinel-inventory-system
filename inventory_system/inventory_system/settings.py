@@ -29,6 +29,9 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
+LOGIN_REDIRECT_URL = 'account:dashboard'
+LOGIN_URL = 'login' 
+
 
 INSTALLED_APPS = [
     'account'
