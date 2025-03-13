@@ -36,6 +36,7 @@ LOGOUT_REDIRECT_URL = 'login'
 
 INSTALLED_APPS = [
     'account',
+    'recieve_form',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
