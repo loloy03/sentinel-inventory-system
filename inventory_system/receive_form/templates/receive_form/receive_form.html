@@ -7,6 +7,29 @@
     <div style="max-width: 800px; margin: 0 auto; background-color: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 5px;">
       <h2 style="margin-bottom: 20px;">RECEIVED STOCK DATA ENTRY</h2>
       
+      <!-- Result Display Table (Initially Hidden) -->
+      <div id="resultDisplay" style="margin-bottom: 20px; display: none;">
+        <table style="width: 100%; border-collapse: collapse; background-color: white; margin-bottom: 10px;">
+          <thead>
+            <tr style="background-color: #f2f2f2;">
+              <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">PRODUCTION CODE</th>
+              <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">DATE</th>
+              <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">PRODUCT</th>
+              <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">COLOR</th>
+              <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">ITEM CODE</th>
+              <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">QUANTITY</th>
+              <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">STATUS</th>
+            </tr>
+          </thead>
+          <tbody id="resultTableBody">
+            <!-- Result row will be dynamically added here -->
+          </tbody>
+        </table>
+        <div style="padding: 10px; background-color: #dff0d8; border-radius: 5px; color: #3c763d;">
+          Received Details successfully submitted!
+        </div>
+      </div>
+      
       <!-- {% if messages %}
         <div style="margin-bottom: 20px;">
           {% for message in messages %}
@@ -170,6 +193,63 @@
             console.error("Error stopping scanner:", err);
           });
         }
+      }
+      
+      // Handle form submission
+      const stockForm = document.getElementById('stockForm');
+      stockForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Get form values
+        const productionId = document.getElementById('production_id').value;
+        const date = document.getElementById('date').value;
+        const product = document.getElementById('product_received').value;
+        const color = document.getElementById('color').value;
+        const quantity = document.getElementById('quantity').value;
+
+        
+        // Generate item code (you can customize this based on your requirements)
+        // For this example, I'm using first letter of product and color
+        const itemCode = `${product.charAt(0)}${color.charAt(0)}-${productionId.substring(0, 3)}`;
+        
+        // Create table row with form data
+        const resultTableBody = document.getElementById('resultTableBody');
+        resultTableBody.innerHTML = `
+          <tr>
+            <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${productionId}</td>
+            <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${formatDate(date)}</td>
+            <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${product}</td>
+            <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${color}</td>
+            <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${itemCode}</td>
+            <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${quantity}</td>
+            <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">RECEIVED</td>
+          </tr>
+        `;
+        
+        // Show the result display
+        document.getElementById('resultDisplay').style.display = 'block';
+        
+        // Optionally, you can reset the form here if desired
+        // stockForm.reset();
+        
+        // If you want to submit the form to the server after displaying the result,
+        // you can use the following:
+        const formData = new FormData(stockForm);
+        fetch(stockForm.getAttribute('action'), {
+          method: 'POST',
+          body: formData
+        }).then(response => {
+          // Handle server response if needed
+        });
+      });
+      
+      // Helper function to format date as MM-DD-YYYY
+      function formatDate(dateString) {
+        const date = new Date(dateString);
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${month}-${day}-${year}`;
       }
     });
   </script>
