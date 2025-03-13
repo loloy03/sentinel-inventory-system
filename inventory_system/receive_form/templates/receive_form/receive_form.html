@@ -10,14 +10,23 @@
       <!-- {% if messages %}
         <div style="margin-bottom: 20px;">
           {% for message in messages %}
-            <div style="padding: 10px; background-color: {% if message.tags == 'success' %} #dff0d8 {% else %}#f2dede{% endif %}; border-radius: 5px;">
+            <div style="padding: 10px; background-color: {% if message.tags == 'success' %}#dff0d8{% else %}#f2dede{% endif %}; border-radius: 5px;">
               {{ message }}
             </div>
           {% endfor %}
         </div>
-      {% endif %}
-       -->
-      <form method="post" action="">
+      {% endif %} -->
+      
+      <!-- QR Code Scanner Button -->
+      <div style="margin-bottom: 20px; text-align: center;">
+        <button id="scanButton" style="background-color: #2c5e2e; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin-bottom: 10px;">
+          <i class="fas fa-qrcode" style="margin-right: 5px;"></i> Scan QR Code
+        </button>
+        <div id="reader" style="width: 100%; max-width: 500px; margin: 0 auto; display: none;"></div>
+        <div id="scanResult" style="margin-top: 10px; font-weight: bold;"></div>
+      </div>
+      
+      <form method="post" action="" id="stockForm">
         {% csrf_token %}
         
         <div style="margin-bottom: 15px;">
@@ -66,7 +75,10 @@
     </div>
   </div>
 
+  <!-- Include the html5-qrcode library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.4/html5-qrcode.min.js"></script>
   <script>
+    // Quantity functions
     function incrementQuantity() {
       var quantityInput = document.getElementById('quantity');
       quantityInput.value = parseInt(quantityInput.value) + 1;
@@ -79,5 +91,86 @@
         quantityInput.value = currentValue - 1;
       }
     }
+
+    // QR Code Scanner
+    document.addEventListener('DOMContentLoaded', function() {
+      const scanButton = document.getElementById('scanButton');
+      const readerDiv = document.getElementById('reader');
+      const scanResult = document.getElementById('scanResult');
+      let html5QrCode;
+
+      scanButton.addEventListener('click', function() {
+        if (readerDiv.style.display === 'none') {
+          // Show the scanner
+          readerDiv.style.display = 'block';
+          scanButton.textContent = 'Cancel Scan';
+          
+          // Initialize the scanner
+          html5QrCode = new Html5Qrcode("reader");
+          const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+          
+          html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure);
+        } else {
+          // Hide the scanner
+          stopScanner();
+        }
+      });
+
+      function onScanSuccess(decodedText, decodedResult) {
+        // Stop the scanner
+        stopScanner();
+        
+        // Display success message
+        scanResult.textContent = "QR Code scanned successfully!";
+        
+        try {
+          // Parse the QR code data (assuming it's in JSON format)
+          const data = JSON.parse(decodedText);
+          
+          // Fill the form with the scanned data
+          if (data.production_id) document.getElementById('production_id').value = data.production_id;
+          if (data.product) {
+            const productSelect = document.getElementById('product_received');
+            for (let i = 0; i < productSelect.options.length; i++) {
+              if (productSelect.options[i].value === data.product) {
+                productSelect.selectedIndex = i;
+                break;
+              }
+            }
+          }
+          if (data.color) {
+            const colorSelect = document.getElementById('color');
+            for (let i = 0; i < colorSelect.options.length; i++) {
+              if (colorSelect.options[i].value === data.color) {
+                colorSelect.selectedIndex = i;
+                break;
+              }
+            }
+          }
+          if (data.quantity) document.getElementById('quantity').value = data.quantity;
+          if (data.date) document.getElementById('date').value = data.date;
+          
+        } catch (error) {
+          console.error("Error parsing QR code data:", error);
+          scanResult.textContent = "Error parsing QR code data. Please try again.";
+        }
+      }
+
+      function onScanFailure(error) {
+        // Handle scan failure silently
+        console.warn(`QR code scanning failed: ${error}`);
+      }
+
+      function stopScanner() {
+        if (html5QrCode) {
+          html5QrCode.stop().then(() => {
+            readerDiv.style.display = 'none';
+            scanButton.textContent = 'Scan QR Code';
+          }).catch(err => {
+            console.error("Error stopping scanner:", err);
+          });
+        }
+      }
+    });
   </script>
 {% endblock %}
