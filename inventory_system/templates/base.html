@@ -10,7 +10,6 @@
       <h1>Inventory System</h1>
       <nav>
         <ul>
-        <li><a href="{% url 'admin:index' %}">Admin</a></li>
           {% if user.is_authenticated %}
           <li><a href="{% url 'account:dashboard' %}">Dashboard</a></li>
           <div class="logout-section">
