@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Release Form</h1>
+  <p>This is the release form page.</p>
+  <a href="{% url 'receive_form:receive_form' %}">Return to Received Form</a>
+  <a href="{% url 'account:dashboard' %}">Return to Dashboard</a>
+{% endblock %}
