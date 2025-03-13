@@ -23,6 +23,6 @@ urlpatterns = [
     path('account/', include('account.urls', namespace='account')),
     path('login/', auth_views.LoginView.as_view(template_name='account/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
-    path('recieve_form/', include('recieve_form.urls', namespace='recieve_form')),
+    path('receive_form/', include('receive_form.urls', namespace='receive_form')),
 ]
 
