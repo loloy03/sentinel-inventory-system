@@ -1,7 +1,186 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% block content %}
+<h1>Receive Form</h1>
+<p>This is the receive form page.</p>
+<a href="{% url 'account:dashboard' %}">Return to Dashboard</a>
 
-{% block content %}
-  <h1>Receive Form</h1>
-  <p>This is the receive form page.</p>
-  <a href="{% url 'account:dashboard' %}">Return to Dashboard</a>
+<div style="background-color: #c5d9a9; padding: 20px; min-height: 100vh">
+  <h1 style="text-align: center; margin-bottom: 20px">
+    WAREHOUSE MANAGEMENT PORTAL
+  </h1>
+
+  <div
+    style="
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 5px;
+    "
+  >
+    <h2 style="margin-bottom: 20px">RECEIVED STOCK DATA ENTRY</h2>
+
+    <form method="post" action="">
+      {% csrf_token %}
+
+      <div style="margin-bottom: 15px">
+        <label for="production_id" style="display: block; margin-bottom: 5px"
+          >Production ID* (Enter a number)</label
+        >
+        <input
+          type="text"
+          id="production_id"
+          name="production_id"
+          placeholder="e.g., 000-0-00000"
+          style="
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+          "
+          required
+        />
+      </div>
+
+      <div style="margin-bottom: 15px">
+        <label for="product_received" style="display: block; margin-bottom: 5px"
+          >Product Received*</label
+        >
+        <select
+          id="product_received"
+          name="product_received"
+          style="
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+          "
+          required
+        >
+          <option value="" selected disabled>Choose an option</option>
+          <option value="product1">Product 1</option>
+          <option value="product2">Product 2</option>
+          <option value="product3">Product 3</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom: 15px">
+        <label for="color" style="display: block; margin-bottom: 5px"
+          >Color*</label
+        >
+        <select
+          id="color"
+          name="color"
+          style="
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+          "
+          required
+        >
+          <option value="" selected disabled>Choose an option</option>
+          <option value="red">Red</option>
+          <option value="blue">Blue</option>
+          <option value="green">Green</option>
+          <option value="black">Black</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom: 15px">
+        <label for="quantity" style="display: block; margin-bottom: 5px"
+          >Quantity*</label
+        >
+        <div style="display: flex; align-items: center">
+          <input
+            type="number"
+            id="quantity"
+            name="quantity"
+            value="0"
+            min="0"
+            style="
+              width: 100%;
+              padding: 8px;
+              border: 1px solid #ccc;
+              border-radius: 4px;
+            "
+            required
+          />
+          <button
+            type="button"
+            onclick="decrementQuantity()"
+            style="
+              margin-left: 5px;
+              padding: 8px 12px;
+              background: #fff;
+              border: 1px solid #ccc;
+            "
+          >
+            -
+          </button>
+          <button
+            type="button"
+            onclick="incrementQuantity()"
+            style="
+              margin-left: 5px;
+              padding: 8px 12px;
+              background: #fff;
+              border: 1px solid #ccc;
+            "
+          >
+            +
+          </button>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 15px">
+        <label for="date" style="display: block; margin-bottom: 5px"
+          >Date</label
+        >
+        <input
+          type="date"
+          id="date"
+          name="date"
+          value="{% now 'Y-m-d' %}"
+          style="
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+          "
+        />
+      </div>
+
+      <p style="margin-bottom: 15px">*required</p>
+
+      <button
+        type="submit"
+        style="
+          background-color: #2c5e2e;
+          color: white;
+          padding: 10px 20px;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+        "
+      >
+        Submit Details
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+  function incrementQuantity() {
+    var quantityInput = document.getElementById("quantity");
+    quantityInput.value = parseInt(quantityInput.value) + 1;
+  }
+
+  function decrementQuantity() {
+    var quantityInput = document.getElementById("quantity");
+    var currentValue = parseInt(quantityInput.value);
+    if (currentValue > 0) {
+      quantityInput.value = currentValue - 1;
+    }
+  }
+</script>
 {% endblock %}
