@@ -2,7 +2,7 @@ from django.db import models
 
 # Create your models here.
 class ReceivedStock(models.Model):
-    production_id = models.CharField(max_length=100)
+    production_id = models.CharField(max_length=100, primary_key=True)
     date = models.DateField()
     product = models.CharField(max_length=100)
     color = models.CharField(max_length=50)
