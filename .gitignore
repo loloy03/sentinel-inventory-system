@@ -1,0 +1,20 @@
+#ignore credentials files
+credentials.json
+
+# Ignore environment files
+.env
+.env.local
+
+# Ignore dependencies
+node_modules/
+venv/
+
+# Ignore compiled files
+*.pyc
+*.class
+*.o
+*.exe
+
+# Ignore system files
+.DS_Store
+Thumbs.db
