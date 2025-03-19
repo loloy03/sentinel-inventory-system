@@ -8,7 +8,9 @@ class ReceivedStock(models.Model):
     color = models.CharField(max_length=50)
     item_code = models.CharField(max_length=100)
     quantity = models.IntegerField()
-    status = models.CharField(max_length=50, default="RECEIVED")
+    pallet_position = models.CharField(max_length=50)
+    status = models.CharField(max_length=50)
+    warehouse_id = models.CharField(max_length=100, blank=True)
 
     def __str__(self):
         return f"{self.production_id} - {self.product} ({self.color})"
