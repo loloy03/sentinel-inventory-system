@@ -15,31 +15,6 @@ CREDENTIALS_FILE = "credentials.json"
 
 # Create your views here.
 def receive_form(request):
-    return render(request, "receive_form/receive_form.html")
-
-
-def get_google_sheet():
-    """Connect to Google Sheets API and return the specific spreadsheet"""
-    try:
-        credentials = ServiceAccountCredentials.from_json_keyfile_name(
-            CREDENTIALS_FILE, SCOPE
-        )
-        client = gspread.authorize(credentials)
-
-        # Open the spreadsheet by its URL
-        spreadsheet = client.open_by_url(
-            "https://docs.google.com/spreadsheets/d/1w_4eJdKW5l5WeSk5F4yAKARFxUhZVbx9j3_ujeS_BZ0/edit?gid=1727869081#gid=1727869081"
-        )
-
-        # Select the first worksheet (you can change this if needed)
-        worksheet = spreadsheet.get_worksheet(0)
-        return worksheet
-    except Exception as e:
-        print(f"Error connecting to Google Sheets: {e}")
-        return None
-
-
-def receive_form(request):
     if request.method == "POST":
         # Get form data
         production_id = request.POST.get("production_id")
@@ -47,12 +22,18 @@ def receive_form(request):
         color = request.POST.get("color")
         quantity = int(request.POST.get("quantity"))
         date = request.POST.get("date")
+        status = request.POST.get("status")
+        pallet_position = request.POST.get("pallet_position")
+
 
         # Create item code by combining product and color
         item_code = f"{product}{color}"
+        
+        # Create warehouse ID
+        warehouse_id = f"{production_id}{pallet_position}"
 
         # Format the date as shown in the Google Sheet
-        formatted_date = datetime.strptime(date, "%Y-%m-%d").strftime("%m-%d-%Y")
+        formatted_date = datetime.strptime(date, "%Y-%m-%d").strftime("%m/%d/%Y")
 
         # Save to database
         stock_entry = ReceivedStock.objects.create(
@@ -62,21 +43,26 @@ def receive_form(request):
             color=color,
             item_code=item_code,
             quantity=quantity,
+            pallet_position=pallet_position,
+            status=status,
+            warehouse_id=warehouse_id
         )
 
         # Save to Google Sheet
         worksheet = get_google_sheet()
         if worksheet:
-            # Append row to the spreadsheet
+            # Append row to the spreadsheet - without item_code, status, and warehouse_id
             worksheet.append_row(
                 [
                     production_id,
-                    formatted_date,
                     product,
                     color,
                     item_code,
                     quantity,
-                    "RECEIVED",
+                    formatted_date,
+                    pallet_position,
+                    status,
+                    warehouse_id
                 ]
             )
             messages.success(
@@ -91,3 +77,24 @@ def receive_form(request):
         return redirect("receive_form:receive_form")
 
     return render(request, "receive_form/receive_form.html")
+
+
+def get_google_sheet():
+    """Connect to Google Sheets API and return the specific spreadsheet"""
+    try:
+        credentials = ServiceAccountCredentials.from_json_keyfile_name(
+            CREDENTIALS_FILE, SCOPE
+        )
+        client = gspread.authorize(credentials)
+
+        # Open the spreadsheet by its URL
+        spreadsheet = client.open_by_url(
+            "https://docs.google.com/spreadsheets/d/13-dHMhSiirfq6QS4_IBuUiCdnSBjKO8axL4XSP_7M6g/edit?gid=0#gid=0"
+        )
+
+        # Select the first worksheet (you can change this if needed)
+        worksheet = spreadsheet.get_worksheet(0)
+        return worksheet
+    except Exception as e:
+        print(f"Error connecting to Google Sheets: {e}")
+        return None
