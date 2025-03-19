@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'account',
     'receive_form',
     'release_form',
+    'warehouse_layout',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
