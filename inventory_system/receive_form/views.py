@@ -89,7 +89,7 @@ def get_google_sheet():
 
         # Open the spreadsheet by its URL
         spreadsheet = client.open_by_url(
-            "https://docs.google.com/spreadsheets/d/13-dHMhSiirfq6QS4_IBuUiCdnSBjKO8axL4XSP_7M6g/edit?gid=0#gid=0"
+            "https://docs.google.com/spreadsheets/d/1FkuU_E8BPxrD2lgLjxwmEJ1tMDvIYUfUU3g34eQe7vc/edit?gid=0#gid=0"
         )
 
         # Select the first worksheet (you can change this if needed)
