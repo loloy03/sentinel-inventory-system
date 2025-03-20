@@ -188,19 +188,37 @@
         <label for="pallet_position" style="display: block; margin-bottom: 5px"
           >Pallet Position No.*</label
         >
-        <input
-          type="text"
-          id="pallet_position"
-          name="pallet_position"
-          placeholder="e.g., 0040"
-          style="
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-          "
-          required
-        />
+        <div style="display: flex; align-items: center">
+          <input
+            type="text"
+            id="pallet_position"
+            name="pallet_position"
+            placeholder="e.g., 0040"
+            style="
+              width: 100%;
+              padding: 8px;
+              border: 1px solid #ccc;
+              border-radius: 4px;
+            "
+            required
+            readonly
+          />
+          <button
+            type="button"
+            id="selectPalletButton"
+            style="
+              margin-left: 5px;
+              padding: 8px 12px;
+              background-color: #2c5e2e;
+              color: white;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+            "
+          >
+            Select Position
+          </button>
+        </div>
       </div>
 
       <div style="margin-bottom: 15px">
@@ -360,10 +378,12 @@
       }
     }
   });
-  // Add this to your receive_form.html inside the script tag
+  
+  // Warehouse Layout Modal
   document.addEventListener("DOMContentLoaded", function () {
-    // Get the pallet position input field
+    // Get the pallet position input field and the select button
     const palletPositionInput = document.getElementById("pallet_position");
+    const selectPalletButton = document.getElementById("selectPalletButton");
 
     // Create a modal container for the warehouse layout
     const modalContainer = document.createElement("div");
@@ -416,8 +436,8 @@
     modalContainer.appendChild(modalContent);
     document.body.appendChild(modalContainer);
 
-    // Add event listener to the pallet position input
-    palletPositionInput.addEventListener("click", function () {
+    // Add event listener to the select button
+    selectPalletButton.addEventListener("click", function () {
       modalContainer.style.display = "block";
     });
 
