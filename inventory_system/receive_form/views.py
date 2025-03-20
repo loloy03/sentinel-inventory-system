@@ -101,4 +101,4 @@ def get_google_sheet():
 
 def warehouse_layout(request):
     """Render the warehouse layout page"""
-    return render(request, "receive_form/warehouse_layout.html")
+    return render(request, "receive_form/receive_warehouse_layout.html")
