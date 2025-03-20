@@ -167,7 +167,9 @@
       <div class="popup-content" id="popup-content"></div>
       <div class="popup-buttons">
         <button class="popup-close" id="popup-close">Close</button>
-        <button class="popup-select" id="popup-select">Select This Pallet</button>
+        <button class="popup-select" id="popup-select">
+          Select This Pallet
+        </button>
       </div>
     </div>
 
@@ -177,8 +179,8 @@
         const warehouseData = [
           {
             name: "WAREHOUSE: QA",
-            cols: 18,
-            rows: 12,
+            cols: 21,
+            rows: 14,
             startCode: 1296,
             prefix: "P",
           },
@@ -244,7 +246,7 @@
         });
 
         // Select pallet
-        popupSelect.addEventListener("click", function() {
+        popupSelect.addEventListener("click", function () {
           if (currentPalletCode && window.parent !== window) {
             window.parent.postMessage(
               {
@@ -291,18 +293,28 @@
 
             // Create rows and cells
             let codeCounter = warehouse.startCode;
+            const cellCodes = [];
 
+            // First calculate all codes by column
+            for (let j = 0; j < warehouse.cols; j++) {
+              for (let i = 0; i < warehouse.rows; i++) {
+                cellCodes.push(warehouse.prefix + codeCounter);
+                codeCounter++;
+              }
+            }
+
+            // Then create the table using the pre-calculated codes
+            let codeIndex = 0;
             for (let i = 0; i < warehouse.rows; i++) {
               const row = document.createElement("tr");
 
               for (let j = 0; j < warehouse.cols; j++) {
-                const code = warehouse.prefix + codeCounter;
+                const code = cellCodes[j * warehouse.rows + i];
                 const cell = document.createElement("td");
                 cell.className = "warehouse-cell";
                 cell.setAttribute("data-code", code);
                 cell.textContent = code;
                 row.appendChild(cell);
-                codeCounter++;
               }
 
               table.appendChild(row);
@@ -359,11 +371,11 @@
         function handleTouchStart(e) {
           touchStartTime = Date.now();
           touchMoved = false;
-          
+
           const touch = e.touches[0];
           initialX = touch.clientX - xOffset;
           initialY = touch.clientY - yOffset;
-          
+
           // Start dragging but don't prevent default entirely
           isDragging = true;
         }
@@ -372,43 +384,46 @@
           if (!isDragging) {
             return;
           }
-          
+
           const touch = e.touches[0];
           const moveX = touch.clientX - initialX;
           const moveY = touch.clientY - initialY;
-          
+
           // Check if movement is significant
           const moveDistance = Math.sqrt(
             Math.pow(moveX - currentX, 2) + Math.pow(moveY - currentY, 2)
           );
-          
+
           if (moveDistance > TOUCH_MOVEMENT_THRESHOLD) {
             touchMoved = true;
-            
+
             // This is definitely a drag, so we can prevent default
             e.preventDefault();
-            
+
             currentX = moveX;
             currentY = moveY;
             xOffset = currentX;
             yOffset = currentY;
-            
+
             setTransform();
           }
         }
 
         function handleTouchEnd(e) {
           const touchDuration = Date.now() - touchStartTime;
-          
+
           // End drag operation
           isDragging = false;
-          
+
           // Only trigger tap if it was a short touch without much movement
           if (!touchMoved && touchDuration < TOUCH_DURATION) {
             // Find the element that was tapped
             const touch = e.changedTouches[0];
-            const element = document.elementFromPoint(touch.clientX, touch.clientY);
-            
+            const element = document.elementFromPoint(
+              touch.clientX,
+              touch.clientY
+            );
+
             if (element && element.classList.contains("warehouse-cell")) {
               const code = element.getAttribute("data-code");
               currentPalletCode = code;
@@ -473,7 +488,12 @@
             product: "Product " + code.substring(1),
             quantity: Math.floor(Math.random() * 100) + 1,
             lastUpdated: new Date().toLocaleDateString(),
-            section: code.substring(1, 2) === "1" ? "QA" : (code.substring(1, 2) === "2" ? "ENTRANCE" : "FINISHING")
+            section:
+              code.substring(1, 2) === "1"
+                ? "QA"
+                : code.substring(1, 2) === "2"
+                ? "ENTRANCE"
+                : "FINISHING",
           };
 
           // Populate popup content
