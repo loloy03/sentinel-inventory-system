@@ -4,6 +4,7 @@
     <p>Welcome to your dashboard, {{ user.username }}</p>
     <li><a href="{% url 'receive_form:receive_form' %}">Receiving Inventory</a></li>
     <li><a href="{% url 'release_form:release_form' %}">Releasing Inventory</a></li>
-    <li><a href="{% url 'account:dashboard' %}">Warehouse Layout</a></li>
+    <li><a href="{% url 'warehouse_layout:warehouse_map' %}">Warehouse Layout</a></li>
+
 
 {% endblock %}
