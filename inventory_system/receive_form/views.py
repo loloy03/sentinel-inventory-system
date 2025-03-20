@@ -10,7 +10,7 @@ SCOPE = [
     "https://spreadsheets.google.com/feeds",
     "https://www.googleapis.com/auth/drive",
 ]
-CREDENTIALS_FILE = "credentials.json" 
+CREDENTIALS_FILE = "credentials.json"
 
 
 # Create your views here.
@@ -25,10 +25,9 @@ def receive_form(request):
         status = request.POST.get("status")
         pallet_position = request.POST.get("pallet_position")
 
-
         # Create item code by combining product and color
         item_code = f"{product}{color}"
-        
+
         # Create warehouse ID
         warehouse_id = f"{production_id}{pallet_position}"
 
@@ -45,7 +44,7 @@ def receive_form(request):
             quantity=quantity,
             pallet_position=pallet_position,
             status=status,
-            warehouse_id=warehouse_id
+            warehouse_id=warehouse_id,
         )
 
         # Save to Google Sheet
@@ -62,7 +61,7 @@ def receive_form(request):
                     formatted_date,
                     pallet_position,
                     status,
-                    warehouse_id
+                    warehouse_id,
                 ]
             )
             messages.success(
@@ -98,3 +97,8 @@ def get_google_sheet():
     except Exception as e:
         print(f"Error connecting to Google Sheets: {e}")
         return None
+
+
+def warehouse_layout(request):
+    """Render the warehouse layout page"""
+    return render(request, "receive_form/warehouse_layout.html")

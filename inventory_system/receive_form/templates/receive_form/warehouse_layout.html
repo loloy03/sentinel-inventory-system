@@ -1,0 +1,467 @@
+{% extends "base.html" %} {% block content %}
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    overflow: hidden;
+    background-color: #f0f0f0;
+  }
+
+  .container {
+    position: relative;
+    width: 100%;
+    height: 85vh;
+    overflow: hidden;
+    background-color: white;
+    border: 1px solid #ccc;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    cursor: grab;
+  }
+
+  .draggable-area {
+    position: absolute;
+    cursor: grab;
+    transform-origin: 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+    min-width: max-content;
+  }
+
+  .draggable-area:active {
+    cursor: grabbing;
+  }
+
+  .warehouse-section {
+    display: inline-block;
+    vertical-align: top;
+    margin: 10px;
+  }
+
+  .warehouse-table {
+    border-collapse: collapse;
+    background-color: #78b463;
+  }
+
+  .warehouse-header {
+    background-color: #78b463;
+    color: black;
+    text-align: center;
+    font-size: 24px;
+    padding: 10px;
+    font-weight: bold;
+    border: 1px solid black;
+  }
+
+  .warehouse-cell {
+    border: 1px dashed black;
+    text-align: center;
+    padding: 4px;
+    width: 60px;
+    height: 20px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+
+  .warehouse-cell:hover {
+    background-color: #93c782;
+  }
+
+  .popup {
+    display: none;
+    position: fixed;
+    background-color: white;
+    border: 2px solid #666;
+    padding: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    border-radius: 5px;
+    max-width: 250px;
+    width: 80%;
+    font-size: 14px;
+  }
+
+  .popup-content {
+    margin-bottom: 10px;
+  }
+
+  .popup-close {
+    background-color: #555;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+
+  .controls {
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: #eee;
+    border-radius: 5px;
+  }
+
+  .container:active {
+    cursor: grabbing;
+  }
+
+  @media (max-width: 768px) {
+    .warehouse-cell {
+      padding: 8px;
+      width: 50px;
+      height: 16px;
+      font-size: 10px;
+    }
+
+    .popup {
+      max-width: 200px;
+      font-size: 12px;
+    }
+  }
+
+  button {
+    margin-right: 10px;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+</style>
+
+<div class="controls">
+  <button id="zoom-in">Zoom In (+)</button>
+  <button id="zoom-out">Zoom Out (-)</button>
+  <button id="reset">Reset View</button>
+  <span>Drag to move around, click on a cell to see details</span>
+</div>
+
+<div class="container">
+  <div class="draggable-area" id="draggable">
+    <!-- Warehouse sections will be dynamically generated here -->
+  </div>
+</div>
+
+<div class="popup" id="popup">
+  <div class="popup-content" id="popup-content"></div>
+  <button class="popup-close" id="popup-close">Close</button>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Warehouse configuration data
+    const warehouseData = [
+      {
+        name: "WAREHOUSE: QA",
+        cols: 18,
+        rows: 12,
+        startCode: 1296,
+        prefix: "P",
+      },
+
+      {
+        name: "WAREHOUSE: FINISHING",
+        cols: 8,
+        rows: 6,
+        startCode: 1576,
+        prefix: "P",
+      },
+      {
+        name: "ENTRANCE",
+        cols: 3,
+        rows: 5,
+        startCode: 2122,
+        prefix: "P",
+      },
+    ];
+
+    // Generate warehouse layout
+    generateWarehouseLayout();
+
+    const draggableArea = document.getElementById("draggable");
+    const container = document.querySelector(".container");
+    const popup = document.getElementById("popup");
+    const popupContent = document.getElementById("popup-content");
+    const popupClose = document.getElementById("popup-close");
+    const zoomInBtn = document.getElementById("zoom-in");
+    const zoomOutBtn = document.getElementById("zoom-out");
+    const resetBtn = document.getElementById("reset");
+
+    let isDragging = false;
+    let currentX = 0;
+    let currentY = 0;
+    let initialX = 0;
+    let initialY = 0;
+    let xOffset = 0;
+    let yOffset = 0;
+    let scale = 1;
+
+    // Initialize position
+    setTransform();
+
+    // Add mobile support
+    addMobileSupport();
+
+    // Mouse events for dragging
+    container.addEventListener("mousedown", dragStart);
+    document.addEventListener("mouseup", dragEnd);
+    document.addEventListener("mousemove", drag);
+
+    // Touch events for mobile
+    container.addEventListener("touchstart", dragStart);
+    document.addEventListener("touchend", dragEnd);
+    document.addEventListener("touchmove", drag);
+
+    // Zoom controls
+    zoomInBtn.addEventListener("click", zoomIn);
+    zoomOutBtn.addEventListener("click", zoomOut);
+    resetBtn.addEventListener("click", resetView);
+
+    // Wheel event for zooming
+    container.addEventListener("wheel", function (e) {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -0.1 : 0.1;
+      updateScale(delta);
+    });
+
+    // Click event for warehouse cells
+    setupCellClickEvents();
+
+    // Close popup
+    popupClose.addEventListener("click", function () {
+      popup.style.display = "none";
+    });
+
+    // Function to generate warehouse layout
+    function generateWarehouseLayout() {
+      const draggableArea = document.getElementById("draggable");
+
+      // Create a top container for the QA warehouse
+      const topContainer = document.createElement("div");
+      topContainer.style.width = "100%";
+      topContainer.style.marginBottom = "20px";
+
+      // Create a bottom container for FINISHING and ENTRANCE (side by side)
+      const bottomContainer = document.createElement("div");
+      bottomContainer.style.display = "flex";
+      bottomContainer.style.flexDirection = "row";
+      bottomContainer.style.gap = "20px";
+
+      // Generate each warehouse section
+      warehouseData.forEach((warehouse, index) => {
+        const warehouseSection = document.createElement("div");
+        warehouseSection.className = "warehouse-section";
+
+        const table = document.createElement("table");
+        table.className = "warehouse-table";
+
+        // Create header
+        const headerRow = document.createElement("tr");
+        const headerCell = document.createElement("th");
+        headerCell.className = "warehouse-header";
+        headerCell.colSpan = warehouse.cols;
+        headerCell.textContent = warehouse.name;
+        headerRow.appendChild(headerCell);
+        table.appendChild(headerRow);
+
+        // Create rows and cells
+        let codeCounter = warehouse.startCode;
+
+        for (let i = 0; i < warehouse.rows; i++) {
+          const row = document.createElement("tr");
+
+          for (let j = 0; j < warehouse.cols; j++) {
+            const code = warehouse.prefix + codeCounter;
+            const cell = document.createElement("td");
+            cell.className = "warehouse-cell";
+            cell.setAttribute("data-code", code);
+            cell.textContent = code;
+            row.appendChild(cell);
+            codeCounter++;
+          }
+
+          table.appendChild(row);
+        }
+
+        warehouseSection.appendChild(table);
+
+        // Add to the appropriate container based on index
+        if (index === 0) {
+          // QA warehouse goes in the top container
+          topContainer.appendChild(warehouseSection);
+        } else {
+          // FINISHING and ENTRANCE go in the bottom container
+          bottomContainer.appendChild(warehouseSection);
+        }
+      });
+
+      // Add both containers to the draggable area
+      draggableArea.appendChild(topContainer);
+      draggableArea.appendChild(bottomContainer);
+    }
+
+    // Function to setup cell click events
+    function setupCellClickEvents() {
+      const cells = document.querySelectorAll(".warehouse-cell");
+      cells.forEach((cell) => {
+        cell.addEventListener("click", function (e) {
+          e.stopPropagation();
+          const code = this.getAttribute("data-code");
+          showPopup(code, e.clientX, e.clientY);
+        });
+      });
+    }
+
+    // Function to improve mobile interaction
+    function addMobileSupport() {
+      const cells = document.querySelectorAll(".warehouse-cell");
+      cells.forEach((cell) => {
+        cell.addEventListener("touchstart", function (e) {
+          e.preventDefault(); // Prevent default touch behavior
+          const code = this.getAttribute("data-code");
+          showPopup(code, 0, 0); // Coordinates don't matter for mobile
+        });
+      });
+    }
+
+    function dragStart(e) {
+      e.preventDefault();
+
+      if (e.type === "touchstart") {
+        initialX = e.touches[0].clientX - xOffset;
+        initialY = e.touches[0].clientY - yOffset;
+      } else {
+        initialX = e.clientX - xOffset;
+        initialY = e.clientY - yOffset;
+      }
+
+      // Close popup when dragging starts
+      popup.style.display = "none";
+
+      isDragging = true;
+    }
+
+    function dragEnd(e) {
+      isDragging = false;
+    }
+
+    function drag(e) {
+      if (isDragging) {
+        e.preventDefault();
+
+        if (e.type === "touchmove") {
+          currentX = e.touches[0].clientX - initialX;
+          currentY = e.touches[0].clientY - initialY;
+        } else {
+          currentX = e.clientX - initialX;
+          currentY = e.clientY - initialY;
+        }
+
+        xOffset = currentX;
+        yOffset = currentY;
+
+        setTransform();
+      }
+    }
+
+    function setTransform() {
+      draggableArea.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale})`;
+    }
+
+    function updateScale(delta) {
+      scale += delta;
+      scale = Math.min(Math.max(0.5, scale), 3); // Limit scale between 0.5 and 3
+      setTransform();
+    }
+
+    function zoomIn() {
+      updateScale(0.1);
+    }
+
+    function zoomOut() {
+      updateScale(-0.1);
+    }
+
+    function resetView() {
+      currentX = 0;
+      currentY = 0;
+      xOffset = 0;
+      yOffset = 0;
+      scale = 1;
+      setTransform();
+    }
+
+    function showPopup(code, x, y) {
+      // Generate pallet details (in a real app, this would come from a database)
+      const palletDetails = {
+        code: code,
+        product: "Product " + code.substring(1),
+        quantity: Math.floor(Math.random() * 100) + 1,
+        lastUpdated: new Date().toLocaleDateString(),
+      };
+
+      // Populate popup content
+      popupContent.innerHTML = `
+            <h3>Pallet Information</h3>
+            <p><strong>Pallet Code:</strong> ${palletDetails.code}</p>
+            <p><strong>Product:</strong> ${palletDetails.product}</p>
+            <p><strong>Quantity:</strong> ${palletDetails.quantity} units</p>
+            <p><strong>Last Updated:</strong> ${palletDetails.lastUpdated}</p>
+          `;
+
+      // Position and show popup
+      const isMobile = window.innerWidth <= 768;
+
+      if (isMobile) {
+        // For mobile, center the popup
+        popup.style.left = "50%";
+        popup.style.top = "50%";
+        popup.style.transform = "translate(-50%, -50%)";
+      } else {
+        // For desktop, position near the click
+        popup.style.left = `${x}px`;
+        popup.style.top = `${y}px`;
+        popup.style.transform = "none";
+
+        // Adjust popup position if it goes out of viewport
+        setTimeout(() => {
+          const rect = popup.getBoundingClientRect();
+          if (rect.right > window.innerWidth) {
+            popup.style.left = `${x - rect.width}px`;
+          }
+          if (rect.bottom > window.innerHeight) {
+            popup.style.top = `${y - rect.height}px`;
+          }
+        }, 10);
+      }
+
+      popup.style.display = "block";
+    }
+    // Add this to the end of your existing setupCellClickEvents function in warehouse_layout.html
+    function setupCellClickEvents() {
+      const cells = document.querySelectorAll(".warehouse-cell");
+      cells.forEach((cell) => {
+        cell.addEventListener("click", function (e) {
+          e.stopPropagation();
+          const code = this.getAttribute("data-code");
+
+          // Check if we're in an iframe
+          if (window.parent !== window) {
+            // We're in an iframe, send message to parent window
+            window.parent.postMessage(
+              {
+                type: "palletSelected",
+                palletCode: code,
+              },
+              "*"
+            );
+          } else {
+            // Normal behavior when not in iframe
+            showPopup(code, e.clientX, e.clientY);
+          }
+        });
+      });
+    }
+  });
+</script>
+
+{% endblock %}
