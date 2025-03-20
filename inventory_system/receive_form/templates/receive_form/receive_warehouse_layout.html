@@ -221,37 +221,22 @@
         let yOffset = 0;
         let scale = 1;
         let currentPalletCode = null;
+        let touchStartTime = 0;
+        let touchMoved = false;
+        let lastTap = 0; // For detecting double taps
+        const TOUCH_DURATION = 500; // Max duration for a tap in ms
+        const TOUCH_MOVEMENT_THRESHOLD = 10; // Max movement in px for a tap
 
         // Initialize position
         setTransform();
 
-        // Add mobile support
-        addMobileSupport();
-
-        // Mouse events for dragging
-        container.addEventListener("mousedown", dragStart);
-        document.addEventListener("mouseup", dragEnd);
-        document.addEventListener("mousemove", drag);
-
-        // Touch events for mobile
-        container.addEventListener("touchstart", dragStart);
-        document.addEventListener("touchend", dragEnd);
-        document.addEventListener("touchmove", drag);
+        // Setup interaction events
+        setupInteractionEvents();
 
         // Zoom controls
         zoomInBtn.addEventListener("click", zoomIn);
         zoomOutBtn.addEventListener("click", zoomOut);
         resetBtn.addEventListener("click", resetView);
-
-        // Wheel event for zooming
-        container.addEventListener("wheel", function (e) {
-          e.preventDefault();
-          const delta = e.deltaY > 0 ? -0.1 : 0.1;
-          updateScale(delta);
-        });
-
-        // Click event for warehouse cells
-        setupCellClickEvents();
 
         // Close popup
         popupClose.addEventListener("click", function () {
@@ -340,8 +325,26 @@
           draggableArea.appendChild(bottomContainer);
         }
 
-        // Function to setup cell click events
-        function setupCellClickEvents() {
+        // Function to setup interaction events for both mouse and touch
+        function setupInteractionEvents() {
+          // Mouse events for dragging
+          container.addEventListener("mousedown", dragStart);
+          document.addEventListener("mouseup", dragEnd);
+          document.addEventListener("mousemove", drag);
+
+          // Touch events for dragging and tapping
+          container.addEventListener("touchstart", handleTouchStart);
+          document.addEventListener("touchend", handleTouchEnd);
+          document.addEventListener("touchmove", handleTouchMove);
+
+          // Wheel event for zooming
+          container.addEventListener("wheel", function (e) {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -0.1 : 0.1;
+            updateScale(delta);
+          });
+
+          // Click event for warehouse cells (for mouse devices)
           const cells = document.querySelectorAll(".warehouse-cell");
           cells.forEach((cell) => {
             cell.addEventListener("click", function (e) {
@@ -353,33 +356,71 @@
           });
         }
 
-        // Function to improve mobile interaction
-        function addMobileSupport() {
-          const cells = document.querySelectorAll(".warehouse-cell");
-          cells.forEach((cell) => {
-            cell.addEventListener("touchstart", function (e) {
-              e.preventDefault(); // Prevent default touch behavior
-              const code = this.getAttribute("data-code");
+        function handleTouchStart(e) {
+          touchStartTime = Date.now();
+          touchMoved = false;
+          
+          const touch = e.touches[0];
+          initialX = touch.clientX - xOffset;
+          initialY = touch.clientY - yOffset;
+          
+          // Start dragging but don't prevent default entirely
+          isDragging = true;
+        }
+
+        function handleTouchMove(e) {
+          if (!isDragging) {
+            return;
+          }
+          
+          const touch = e.touches[0];
+          const moveX = touch.clientX - initialX;
+          const moveY = touch.clientY - initialY;
+          
+          // Check if movement is significant
+          const moveDistance = Math.sqrt(
+            Math.pow(moveX - currentX, 2) + Math.pow(moveY - currentY, 2)
+          );
+          
+          if (moveDistance > TOUCH_MOVEMENT_THRESHOLD) {
+            touchMoved = true;
+            
+            // This is definitely a drag, so we can prevent default
+            e.preventDefault();
+            
+            currentX = moveX;
+            currentY = moveY;
+            xOffset = currentX;
+            yOffset = currentY;
+            
+            setTransform();
+          }
+        }
+
+        function handleTouchEnd(e) {
+          const touchDuration = Date.now() - touchStartTime;
+          
+          // End drag operation
+          isDragging = false;
+          
+          // Only trigger tap if it was a short touch without much movement
+          if (!touchMoved && touchDuration < TOUCH_DURATION) {
+            // Find the element that was tapped
+            const touch = e.changedTouches[0];
+            const element = document.elementFromPoint(touch.clientX, touch.clientY);
+            
+            if (element && element.classList.contains("warehouse-cell")) {
+              const code = element.getAttribute("data-code");
               currentPalletCode = code;
-              showPopup(code, 0, 0); // Coordinates don't matter for mobile
-            });
-          });
+              showPopup(code, touch.clientX, touch.clientY);
+            }
+          }
         }
 
         function dragStart(e) {
           e.preventDefault();
-
-          if (e.type === "touchstart") {
-            initialX = e.touches[0].clientX - xOffset;
-            initialY = e.touches[0].clientY - yOffset;
-          } else {
-            initialX = e.clientX - xOffset;
-            initialY = e.clientY - yOffset;
-          }
-
-          // Close popup when dragging starts
-          popup.style.display = "none";
-
+          initialX = e.clientX - xOffset;
+          initialY = e.clientY - yOffset;
           isDragging = true;
         }
 
@@ -390,18 +431,10 @@
         function drag(e) {
           if (isDragging) {
             e.preventDefault();
-
-            if (e.type === "touchmove") {
-              currentX = e.touches[0].clientX - initialX;
-              currentY = e.touches[0].clientY - initialY;
-            } else {
-              currentX = e.clientX - initialX;
-              currentY = e.clientY - initialY;
-            }
-
+            currentX = e.clientX - initialX;
+            currentY = e.clientY - initialY;
             xOffset = currentX;
             yOffset = currentY;
-
             setTransform();
           }
         }
