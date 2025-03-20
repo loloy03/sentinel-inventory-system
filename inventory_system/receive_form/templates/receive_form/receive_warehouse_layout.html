@@ -94,8 +94,23 @@
         margin-bottom: 10px;
       }
 
+      .popup-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 15px;
+      }
+
       .popup-close {
         background-color: #555;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        cursor: pointer;
+        border-radius: 3px;
+      }
+
+      .popup-select {
+        background-color: #2c5e2e;
         color: white;
         border: none;
         padding: 5px 10px;
@@ -150,7 +165,10 @@
 
     <div class="popup" id="popup">
       <div class="popup-content" id="popup-content"></div>
-      <button class="popup-close" id="popup-close">Close</button>
+      <div class="popup-buttons">
+        <button class="popup-close" id="popup-close">Close</button>
+        <button class="popup-select" id="popup-select">Select This Pallet</button>
+      </div>
     </div>
 
     <script>
@@ -189,6 +207,7 @@
         const popup = document.getElementById("popup");
         const popupContent = document.getElementById("popup-content");
         const popupClose = document.getElementById("popup-close");
+        const popupSelect = document.getElementById("popup-select");
         const zoomInBtn = document.getElementById("zoom-in");
         const zoomOutBtn = document.getElementById("zoom-out");
         const resetBtn = document.getElementById("reset");
@@ -201,6 +220,7 @@
         let xOffset = 0;
         let yOffset = 0;
         let scale = 1;
+        let currentPalletCode = null;
 
         // Initialize position
         setTransform();
@@ -236,6 +256,20 @@
         // Close popup
         popupClose.addEventListener("click", function () {
           popup.style.display = "none";
+        });
+
+        // Select pallet
+        popupSelect.addEventListener("click", function() {
+          if (currentPalletCode && window.parent !== window) {
+            window.parent.postMessage(
+              {
+                type: "palletSelected",
+                palletCode: currentPalletCode,
+              },
+              "*"
+            );
+            popup.style.display = "none";
+          }
         });
 
         // Function to generate warehouse layout
@@ -313,6 +347,7 @@
             cell.addEventListener("click", function (e) {
               e.stopPropagation();
               const code = this.getAttribute("data-code");
+              currentPalletCode = code;
               showPopup(code, e.clientX, e.clientY);
             });
           });
@@ -325,6 +360,7 @@
             cell.addEventListener("touchstart", function (e) {
               e.preventDefault(); // Prevent default touch behavior
               const code = this.getAttribute("data-code");
+              currentPalletCode = code;
               showPopup(code, 0, 0); // Coordinates don't matter for mobile
             });
           });
@@ -404,12 +440,14 @@
             product: "Product " + code.substring(1),
             quantity: Math.floor(Math.random() * 100) + 1,
             lastUpdated: new Date().toLocaleDateString(),
+            section: code.substring(1, 2) === "1" ? "QA" : (code.substring(1, 2) === "2" ? "ENTRANCE" : "FINISHING")
           };
 
           // Populate popup content
           popupContent.innerHTML = `
             <h3>Pallet Information</h3>
             <p><strong>Pallet Code:</strong> ${palletDetails.code}</p>
+            <p><strong>Section:</strong> ${palletDetails.section}</p>
             <p><strong>Product:</strong> ${palletDetails.product}</p>
             <p><strong>Quantity:</strong> ${palletDetails.quantity} units</p>
             <p><strong>Last Updated:</strong> ${palletDetails.lastUpdated}</p>
@@ -442,31 +480,6 @@
           }
 
           popup.style.display = "block";
-        }
-        // Add this to the end of your existing setupCellClickEvents function in warehouse_layout.html
-        function setupCellClickEvents() {
-          const cells = document.querySelectorAll(".warehouse-cell");
-          cells.forEach((cell) => {
-            cell.addEventListener("click", function (e) {
-              e.stopPropagation();
-              const code = this.getAttribute("data-code");
-
-              // Check if we're in an iframe
-              if (window.parent !== window) {
-                // We're in an iframe, send message to parent window
-                window.parent.postMessage(
-                  {
-                    type: "palletSelected",
-                    palletCode: code,
-                  },
-                  "*"
-                );
-              } else {
-                // Normal behavior when not in iframe
-                showPopup(code, e.clientX, e.clientY);
-              }
-            });
-          });
         }
       });
     </script>
