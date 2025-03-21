@@ -1,32 +1,256 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <!-- Add this inside the <head> section, just before your existing <style> tag -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <meta charset="utf-8" />
     <title>{% block title %}Inventory System{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Poppins", sans-serif;
+        line-height: 1.6;
+      }
+
+      header {
+        background-color: #fff;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .nav-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+
+      .logo {
+        padding: 10px 0;
+      }
+
+      .logo img {
+        height: 40px;
+      }
+
+      nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      nav ul {
+        display: flex;
+        list-style: none;
+      }
+
+      nav ul li {
+        margin: 0 15px;
+      }
+
+      nav ul li a {
+        text-decoration: none;
+        color: #333;
+        font-weight: 500;
+        padding: 20px 0;
+        display: block;
+        transition: color 0.3s;
+      }
+
+      nav ul li a:hover {
+        color: #4caf50;
+      }
+
+      .logout-btn {
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        margin-left: 15px;
+      }
+
+      .logout-btn:hover {
+        background-color: #45a049;
+      }
+
+      .menu-toggle {
+        display: none;
+        flex-direction: column;
+        justify-content: space-between;
+        width: 30px;
+        height: 21px;
+        cursor: pointer;
+      }
+
+      .menu-toggle span {
+        display: block;
+        height: 3px;
+        width: 100%;
+        background-color: #333;
+        transition: all 0.3s;
+      }
+      .text-small {
+        font-size: 0.8rem;
+      }
+
+      /* Responsive styles */
+      @media (max-width: 768px) {
+        .menu-toggle {
+          display: flex;
+        }
+
+        nav {
+          position: absolute;
+          top: 60px;
+          left: 0;
+          right: 0;
+          background-color: #fff;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+          flex-direction: column;
+          align-items: flex-start;
+          padding: 0;
+          max-height: 0;
+          overflow: hidden;
+          transition: max-height 0.3s ease-out;
+        }
+
+        nav.active {
+          max-height: 300px;
+        }
+
+        nav ul {
+          flex-direction: column;
+          width: 100%;
+        }
+
+        nav ul li {
+          margin: 0;
+          width: 100%;
+          border-bottom: 1px solid #eee;
+        }
+
+        nav ul li a {
+          padding: 15px 20px;
+        }
+
+        .logout-section {
+          width: 100%;
+          padding: 15px 20px;
+          border-bottom: 1px solid #eee;
+        }
+
+        .logout-btn {
+          width: 100%;
+          margin-left: 0;
+        }
+      }
+
+      footer {
+        background-color: #f5f5f5;
+        padding: 20px;
+        text-align: center;
+        margin-top: 20px;
+      }
+
+      main {
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 0 20px;
+      }
+    </style>
   </head>
   <body>
     <header>
-      <h1>Inventory System</h1>
-      <nav>
-        <ul>
+      <div class="nav-container">
+        <div class="logo">
+          <img src="/static/images/sentinel-logo-removebg-preview.png" alt="Sentinel" />
+        </div>
+        <div class="menu-toggle" id="mobile-menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <nav id="navbar" class="text-small">
+          <ul>
+            {% if user.is_authenticated %}
+            <li><a href="{% url 'account:dashboard' %}">Dashboard</a></li>
+            <li>
+              <a href="{% url 'receive_form:receive_form' %}"
+                >Receiving Inventory</a
+              >
+            </li>
+            <li>
+              <a href="{% url 'release_form:release_form' %}"
+                >Releasing Inventory</a
+              >
+            </li>
+            <li>
+              <a href="{% url 'warehouse_layout:warehouse_map' %}"
+                >Warehouse Layout</a
+              >
+            </li>
+            {% else %}
+            <li><a href="{% url 'login' %}">Login</a></li>
+            {% endif %}
+          </ul>
+
           {% if user.is_authenticated %}
-          <li><a href="{% url 'account:dashboard' %}">Dashboard</a></li>
           <div class="logout-section">
             <form method="post" action="{% url 'logout' %}">
               {% csrf_token %}
-              <button type="submit">Logout</button>
+              <button type="submit" class="logout-btn">Logout</button>
             </form>
           </div>
-          {% else %}
-          <li><a href="{% url 'login' %}">Login</a></li>
           {% endif %}
-        </ul>
-      </nav>
+        </nav>
+      </div>
     </header>
     <main>{% block content %} {% endblock %}</main>
     <footer>
       <p>&copy; 2025 Inventory System</p>
     </footer>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const mobileMenu = document.getElementById("mobile-menu");
+        const navbar = document.getElementById("navbar");
+
+        mobileMenu.addEventListener("click", function () {
+          navbar.classList.toggle("active");
+
+          // Animate hamburger to X
+          const spans = this.querySelectorAll("span");
+          spans.forEach((span) => span.classList.toggle("active"));
+
+          if (navbar.classList.contains("active")) {
+            spans[0].style.transform = "rotate(45deg) translate(5px, 5px)";
+            spans[1].style.opacity = "0";
+            spans[2].style.transform = "rotate(-45deg) translate(5px, -5px)";
+          } else {
+            spans[0].style.transform = "none";
+            spans[1].style.opacity = "1";
+            spans[2].style.transform = "none";
+          }
+        });
+      });
+    </script>
   </body>
 </html>
