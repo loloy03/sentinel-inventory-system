@@ -170,7 +170,7 @@
         <button class="popup-select" id="popup-select">
           Select This Pallet
         </button>
-    </div>
+      </div>
     </div>
 
     <script>
@@ -309,11 +309,27 @@
               const row = document.createElement("tr");
 
               for (let j = 0; j < warehouse.cols; j++) {
-                const code = cellCodes[j * warehouse.rows + i];
                 const cell = document.createElement("td");
                 cell.className = "warehouse-cell";
-                cell.setAttribute("data-code", code);
-                cell.textContent = code;
+
+                // Special case for WAREHOUSE: QA, column 20 (index 19)
+                if (index === 0 && j === 19) {
+                  // Make column 20 yellow and unavailable
+                  cell.style.backgroundColor = "yellow";
+                  cell.style.cursor = "not-allowed";
+                  cell.textContent = ""; // No text in this column
+                } else if (index === 0 && j === 20) {
+                  // Use column 20's codes for column 21
+                  const code = cellCodes[(j - 1) * warehouse.rows + i];
+                  cell.setAttribute("data-code", code);
+                  cell.textContent = code;
+                } else {
+                  // Normal case for all other cells
+                  const code = cellCodes[j * warehouse.rows + i];
+                  cell.setAttribute("data-code", code);
+                  cell.textContent = code;
+                }
+
                 row.appendChild(cell);
               }
 
@@ -360,6 +376,11 @@
           const cells = document.querySelectorAll(".warehouse-cell");
           cells.forEach((cell) => {
             cell.addEventListener("click", function (e) {
+              // Skip if this is a yellow cell (column 20 in QA warehouse)
+              if (this.style.backgroundColor === "yellow") {
+                return;
+              }
+
               e.stopPropagation();
               const code = this.getAttribute("data-code");
               currentPalletCode = code;
