@@ -15,6 +15,9 @@ CREDENTIALS_FILE = "credentials.json"
 
 # Create your views here.
 def receive_form(request):
+    # Initialize a variable to store success data for the template
+    success_data = None
+
     if request.method == "POST":
         # Get form data
         production_id = request.POST.get("production_id")
@@ -47,49 +50,98 @@ def receive_form(request):
             warehouse_id=warehouse_id,
         )
 
-        # Save to Google Sheet
-        worksheet = get_google_sheet()
-        if worksheet:
-            # Append row to the spreadsheet - without item_code, status, and warehouse_id
-            worksheet.append_row(
-                [
-                    production_id,
-                    product,
-                    color,
-                    item_code,
-                    quantity,
-                    formatted_date,
-                    pallet_position,
-                    status,
-                    warehouse_id,
-                ]
-            )
+        # Prepare row data for Google Sheets
+        row_data = [
+            production_id,
+            product,
+            color,
+            item_code,
+            quantity,
+            formatted_date,
+            pallet_position,
+            status,
+            warehouse_id,
+        ]
+
+        # Save to appropriate Google Sheets based on status
+        success = save_to_multiple_sheets(status, row_data)
+
+        if success:
+            # Store success data for the confirmation display
+            success_data = {
+                "production_id": production_id,
+                "product": product,
+                "color": color,
+                "quantity": quantity,
+                "date": formatted_date,
+                "status": status,
+                "pallet_position": pallet_position,
+                "warehouse_id": warehouse_id,
+                "item_code": item_code,
+            }
+
             messages.success(
                 request,
-                f"Stock entry received and added to Google Sheet: {quantity} units of {product} in {color}",
+                f"Stock entry received and added to Google Sheets: {quantity} units of {product} in {color}",
             )
         else:
             messages.error(
-                request, "Failed to connect to Google Sheet. Data saved locally only."
+                request, "Failed to connect to Google Sheets. Data saved locally only."
             )
 
-        return redirect("receive_form:receive_form")
+    return render(
+        request, "receive_form/receive_form.html", {"success_data": success_data}
+    )
 
-    return render(request, "receive_form/receive_form.html")
+
+def save_to_multiple_sheets(status, row_data):
+    """Save data to multiple Google Sheets based on status"""
+    try:
+        # First sheet based on status
+        status_sheet = get_google_sheet(status)
+        if not status_sheet:
+            return False
+
+        # Append to the status-specific sheet
+        status_sheet.append_row(row_data)
+
+        # Also append to the common sheet
+        common_sheet_url = "https://docs.google.com/spreadsheets/d/13-dHMhSiirfq6QS4_IBuUiCdnSBjKO8axL4XSP_7M6g/edit?gid=0#gid=0"
+        credentials = ServiceAccountCredentials.from_json_keyfile_name(
+            CREDENTIALS_FILE, SCOPE
+        )
+        client = gspread.authorize(credentials)
+        common_spreadsheet = client.open_by_url(common_sheet_url)
+        common_worksheet = common_spreadsheet.get_worksheet(0)
+
+        if common_worksheet:
+            common_worksheet.append_row(row_data)
+
+        return True
+    except Exception as e:
+        print(f"Error saving to Google Sheets: {e}")
+        return False
 
 
-def get_google_sheet():
-    """Connect to Google Sheets API and return the specific spreadsheet"""
+def get_google_sheet(status):
+    """Connect to Google Sheets API and return the specific spreadsheet based on status"""
     try:
         credentials = ServiceAccountCredentials.from_json_keyfile_name(
             CREDENTIALS_FILE, SCOPE
         )
         client = gspread.authorize(credentials)
 
+        # Determine which spreadsheet to use based on status
+        if status == "NEW":
+            spreadsheet_url = "https://docs.google.com/spreadsheets/d/1WKcH16KLnrtcbve9kzWB_5R-DiN_Jk6WzxI_TdG61xU/edit?gid=1727869081#gid=1727869081"
+        elif status == "REFORMED":
+            spreadsheet_url = "https://docs.google.com/spreadsheets/d/1DjGwJt_yfsjH1XWqEt4qfwPq2G79IuxdDvYIhA2wHe4/edit"
+        else:
+            # Default spreadsheet (original one) for backward compatibility
+            spreadsheet_url = "https://docs.google.com/spreadsheets/d/1FkuU_E8BPxrD2lgLjxwmEJ1tMDvIYUfUU3g34eQe7vc/edit?gid=0#gid=0"
+
         # Open the spreadsheet by its URL
-        spreadsheet = client.open_by_url(
-            "https://docs.google.com/spreadsheets/d/1FkuU_E8BPxrD2lgLjxwmEJ1tMDvIYUfUU3g34eQe7vc/edit?gid=0#gid=0"
-        )
+        spreadsheet = client.open_by_url(spreadsheet_url)
 
         # Select the first worksheet (you can change this if needed)
         worksheet = spreadsheet.get_worksheet(0)
@@ -102,6 +154,7 @@ def get_google_sheet():
 def warehouse_outside(request):
     """Render the warehouse layout page"""
     return render(request, "receive_form/warehouse_layouts/warehouse_outside.html")
+
 
 def warehouse_area(request):
     """Render the warehouse layout page"""

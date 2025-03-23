@@ -208,6 +208,88 @@
     color: #307634;
     font-weight: 600;
   }
+  
+  /* Confirmation modal styles */
+  .confirmation-modal {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 9999;
+  }
+  
+  .confirmation-content {
+    position: relative;
+    width: 90%;
+    max-width: 600px;
+    margin: 10% auto;
+    background-color: #fff;
+    padding: 30px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .confirmation-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    color: #307634;
+  }
+  
+  .confirmation-header i {
+    font-size: 32px;
+    margin-right: 15px;
+  }
+  
+  .confirmation-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+  }
+  
+  .confirmation-details {
+    margin-bottom: 20px;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 15px;
+    background-color: #f8f9fa;
+  }
+  
+  .detail-row {
+    display: flex;
+    margin-bottom: 10px;
+  }
+  
+  .detail-label {
+    width: 40%;
+    font-weight: 500;
+    color: #495057;
+  }
+  
+  .detail-value {
+    width: 60%;
+    color: #212529;
+  }
+  
+  .confirmation-footer {
+    text-align: center;
+  }
+  
+  .confirmation-button {
+    background-color: #307634;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: "Poppins", sans-serif;
+  }
 </style>
 
 <div class="container">
@@ -329,6 +411,61 @@
     </form>
   </div>
 </div>
+
+<!-- Confirmation Modal -->
+{% if success_data %}
+<div class="confirmation-modal" id="confirmationModal">
+  <div class="confirmation-content">
+    <div class="confirmation-header">
+      <i class="fas fa-check-circle"></i>
+      <h3>Stock Entry Successful</h3>
+    </div>
+    
+    <div class="confirmation-details">
+      <div class="detail-row">
+        <div class="detail-label">Production ID:</div>
+        <div class="detail-value">{{ success_data.production_id }}</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Product:</div>
+        <div class="detail-value">{{ success_data.product }}</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Color:</div>
+        <div class="detail-value">{{ success_data.color }}</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Status:</div>
+        <div class="detail-value">{{ success_data.status }}</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Quantity:</div>
+        <div class="detail-value">{{ success_data.quantity }}</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Pallet Position:</div>
+        <div class="detail-value">{{ success_data.pallet_position }}</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Warehouse ID:</div>
+        <div class="detail-value">{{ success_data.warehouse_id }}</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Item Code:</div>
+        <div class="detail-value">{{ success_data.item_code }}</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Date:</div>
+        <div class="detail-value">{{ success_data.date }}</div>
+      </div>
+    </div>
+    
+    <div class="confirmation-footer">
+      <button class="confirmation-button" id="confirmationCloseBtn">Continue</button>
+    </div>
+  </div>
+</div>
+{% endif %}
 
 <!-- Include Font Awesome for the QR code icon -->
 <link
@@ -541,6 +678,16 @@
         modalContainer.style.display = "none";
       }
     });
+    
+    // Confirmation modal functionality
+    const confirmationModal = document.getElementById("confirmationModal");
+    const confirmationCloseBtn = document.getElementById("confirmationCloseBtn");
+    
+    if (confirmationCloseBtn) {
+      confirmationCloseBtn.addEventListener("click", function() {
+        window.location.href = "{% url 'receive_form:receive_form' %}";
+      });
+    }
   });
 </script>
 {% endblock %}
