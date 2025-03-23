@@ -441,7 +441,7 @@
     const iframe = document.createElement("iframe");
     iframe.id = "warehouseLayoutFrame";
     iframe.className = "modal-iframe";
-    iframe.src = "{% url 'receive_form:warehouse_layout' %}"; // Update this path to match your warehouse layout URL
+    iframe.src = "{% url 'receive_form:warehouse_outside' %}"; // Update this path to match your warehouse layout URL
 
     // Append everything to the DOM
     modalContent.appendChild(closeButton);

@@ -99,6 +99,6 @@ def get_google_sheet():
         return None
 
 
-def warehouse_layout(request):
+def warehouse_outside(request):
     """Render the warehouse layout page"""
-    return render(request, "receive_form/receive_warehouse_layout.html")
+    return render(request, "receive_form/warehouse_layouts/warehouse_outside.html")
