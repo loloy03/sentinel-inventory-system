@@ -5,5 +5,6 @@ app_name = 'receive_form'
 
 urlpatterns = [
     path('', views.receive_form, name='receive_form'),
-    path('warehouse/layout/', views.warehouse_outside, name='warehouse_outside'),
+    path('warehouse/outside/', views.warehouse_outside, name='warehouse_outside'),
+    path('warehouse/area/', views.warehouse_area, name='warehouse_area'),
 ]

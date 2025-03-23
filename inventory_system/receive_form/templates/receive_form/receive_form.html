@@ -66,7 +66,6 @@
     font-family: "Poppins", sans-serif;
   }
 
-
   .input-group {
     display: flex;
     align-items: center;
@@ -174,6 +173,40 @@
     height: calc(100% - 40px);
     border: none;
     margin-top: 40px;
+    display: none;
+  }
+
+  /* Tab styles */
+  .warehouse-tabs {
+    display: flex;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #dee2e6;
+  }
+
+  .warehouse-tab {
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid transparent;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    margin-right: 5px;
+    position: relative;
+    top: 1px;
+    font-family: "Poppins", sans-serif;
+  }
+
+  .warehouse-tab:hover {
+    background-color: #f8f9fa;
+  }
+
+  .warehouse-tab.active {
+    border-color: #dee2e6 #dee2e6 #fff;
+    background-color: #fff;
+    color: #307634;
+    font-weight: 600;
   }
 </style>
 
@@ -437,15 +470,42 @@
     closeButton.textContent = "Close";
     closeButton.className = "modal-close";
 
-    // Create an iframe to load the warehouse layout
-    const iframe = document.createElement("iframe");
-    iframe.id = "warehouseLayoutFrame";
-    iframe.className = "modal-iframe";
-    iframe.src = "{% url 'receive_form:warehouse_outside' %}"; // Update this path to match your warehouse layout URL
+    // Create a tabs container
+    const tabsContainer = document.createElement("div");
+    tabsContainer.className = "warehouse-tabs";
+
+    // Create two tabs
+    const insideTab = document.createElement("div");
+    insideTab.className = "warehouse-tab active";
+    insideTab.id = "tab-inside";
+    insideTab.textContent = "Warehouse Area";
+
+    const outsideTab = document.createElement("div");
+    outsideTab.className = "warehouse-tab";
+    outsideTab.id = "tab-outside";
+    outsideTab.textContent = "Warehouse Outside";
+
+    // Add tabs to the tabs container
+    tabsContainer.appendChild(insideTab);
+    tabsContainer.appendChild(outsideTab);
+
+    // Create iframes for both warehouse layouts
+    const insideIframe = document.createElement("iframe");
+    insideIframe.id = "warehouseInsideFrame";
+    insideIframe.className = "modal-iframe";
+    insideIframe.src = "{% url 'receive_form:warehouse_area' %}"; // Update this path to your warehouse area URL
+    insideIframe.style.display = "block"; // Start with inside iframe visible
+
+    const outsideIframe = document.createElement("iframe");
+    outsideIframe.id = "warehouseOutsideFrame";
+    outsideIframe.className = "modal-iframe";
+    outsideIframe.src = "{% url 'receive_form:warehouse_outside' %}"; // This matches your existing URL
 
     // Append everything to the DOM
     modalContent.appendChild(closeButton);
-    modalContent.appendChild(iframe);
+    modalContent.appendChild(tabsContainer);
+    modalContent.appendChild(insideIframe);
+    modalContent.appendChild(outsideIframe);
     modalContainer.appendChild(modalContent);
     document.body.appendChild(modalContainer);
 
@@ -459,7 +519,22 @@
       modalContainer.style.display = "none";
     });
 
-    // Listen for messages from the iframe
+    // Add event listeners for tab switching
+    insideTab.addEventListener("click", function () {
+      insideTab.classList.add("active");
+      outsideTab.classList.remove("active");
+      insideIframe.style.display = "block";
+      outsideIframe.style.display = "none";
+    });
+
+    outsideTab.addEventListener("click", function () {
+      outsideTab.classList.add("active");
+      insideTab.classList.remove("active");
+      outsideIframe.style.display = "block";
+      insideIframe.style.display = "none";
+    });
+
+    // Listen for messages from the iframes
     window.addEventListener("message", function (event) {
       if (event.data && event.data.type === "palletSelected") {
         palletPositionInput.value = event.data.palletCode;
