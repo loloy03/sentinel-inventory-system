@@ -1,58 +1,200 @@
 {% extends "base.html" %} {% block content %}
-<div style="background-color: #c5d9a9; padding: 20px; min-height: 100vh">
-  <h1 style="text-align: center; margin-bottom: 20px">
-    WAREHOUSE MANAGEMENT PORTAL
-  </h1>
+<style>
+  /* Import Poppins font */
+  @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap");
 
-  <div
-    style="
-      max-width: 800px;
-      margin: 0 auto;
-      background-color: rgba(255, 255, 255, 0.1);
-      padding: 20px;
-      border-radius: 5px;
-    "
-  >
-    <h2 style="margin-bottom: 20px">RECEIVED STOCK DATA ENTRY</h2>
+  /* General styles */
+  body {
+    font-family: "Poppins", sans-serif;
+  }
 
-    <!-- {% if messages %}
-        <div style="margin-bottom: 20px;">
-          {% for message in messages %}
-            <div style="padding: 10px; background-color: {% if message.tags == 'success' %}#dff0d8{% else %}#f2dede{% endif %}; border-radius: 5px;">
-              {{ message }}
-            </div>
-          {% endfor %}
-        </div>
-      {% endif %} -->
+  .container {
+    background-color: #f8f9fa;
+    padding: 20px;
+    min-height: 100vh;
+  }
+
+  .form-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  .form-title {
+    margin-bottom: 25px;
+    font-weight: 500;
+    color: #333;
+    font-family: "Poppins", sans-serif;
+  }
+
+  /* Form elements */
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #333;
+    font-weight: 400;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: "Poppins", sans-serif;
+  }
+
+  .form-select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23333%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+    font-family: "Poppins", sans-serif;
+  }
+
+
+  .input-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .scan-btn {
+    background-color: #0d6efd;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    font-family: "Poppins", sans-serif;
+    background-color: #307634;
+  }
+
+  .scan-btn i {
+    margin-right: 8px;
+  }
+
+  .select-position-btn {
+    white-space: nowrap;
+    padding: 10px;
+    background-color: #f8f9fa;
+    color: #333;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: "Poppins", sans-serif;
+    background-color: #307634;
+    color: white;
+  }
+
+  .submit-btn {
+    background-color: #0d6efd;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: "Poppins", sans-serif;
+    background-color: #307634;
+  }
+
+  .qr-reader {
+    width: 100%;
+    max-width: 500px;
+    margin: 15px auto 0;
+    display: none;
+  }
+
+  .scan-result {
+    margin-top: 10px;
+    font-weight: bold;
+  }
+
+  .text-right {
+    text-align: right;
+  }
+
+  /* Modal styles */
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 9999;
+  }
+
+  .modal-content {
+    position: relative;
+    width: 90%;
+    height: 90%;
+    margin: 2% auto;
+    background-color: #fff;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow: hidden;
+    border-radius: 8px;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 5px 10px;
+    background-color: #0d6efd;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .modal-iframe {
+    width: 100%;
+    height: calc(100% - 40px);
+    border: none;
+    margin-top: 40px;
+  }
+</style>
+
+<div class="container">
+  <div class="form-container">
+    <h2 class="form-title">RECEIVING STOCK DATA ENTRY</h2>
 
     <!-- QR Code Scanner Button -->
-    <div style="margin-bottom: 20px; text-align: center">
-      <button
-        id="scanButton"
-        style="
-          background-color: #2c5e2e;
-          color: white;
-          padding: 10px 20px;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          margin-bottom: 10px;
-        "
-      >
-        <i class="fas fa-qrcode" style="margin-right: 5px"></i> Scan QR Code
+    <div class="form-group">
+      <button id="scanButton" class="scan-btn">
+        <i class="fas fa-qrcode"></i> Scan QR Code
       </button>
-      <div
-        id="reader"
-        style="width: 100%; max-width: 500px; margin: 0 auto; display: none"
-      ></div>
-      <div id="scanResult" style="margin-top: 10px; font-weight: bold"></div>
+      <div id="reader" class="qr-reader"></div>
+      <div id="scanResult" class="scan-result"></div>
     </div>
 
     <form method="post" action="" id="stockForm">
       {% csrf_token %}
 
-      <div style="margin-bottom: 15px">
-        <label for="production_id" style="display: block; margin-bottom: 5px"
+      <div class="form-group">
+        <label for="production_id" class="form-label"
           >Production Code* (Enter a number)</label
         >
         <input
@@ -60,29 +202,17 @@
           id="production_id"
           name="production_id"
           placeholder="e.g., 001-3-24S04"
-          style="
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-          "
+          class="form-control"
           required
         />
       </div>
 
-      <div style="margin-bottom: 15px">
-        <label for="product_received" style="display: block; margin-bottom: 5px"
-          >Product*</label
-        >
+      <div class="form-group">
+        <label for="product_received" class="form-label">Product*</label>
         <select
           id="product_received"
           name="product_received"
-          style="
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-          "
+          class="form-select"
           required
         >
           <option value="" selected disabled>Choose an option</option>
@@ -92,21 +222,9 @@
         </select>
       </div>
 
-      <div style="margin-bottom: 15px">
-        <label for="color" style="display: block; margin-bottom: 5px"
-          >Color*</label
-        >
-        <select
-          id="color"
-          name="color"
-          style="
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-          "
-          required
-        >
+      <div class="form-group">
+        <label for="color" class="form-label">Color*</label>
+        <select id="color" name="color" class="form-select" required>
           <option value="" selected disabled>Choose an option</option>
           <option value="green">Green</option>
           <option value="black">Black</option>
@@ -114,191 +232,114 @@
         </select>
       </div>
 
-      <div style="margin-bottom: 15px">
-        <label for="status" style="display: block; margin-bottom: 5px"
-          >Status*</label
-        >
-        <select
-          id="status"
-          name="status"
-          style="
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-          "
-          required
-        >
-          <option value="" selected disabled>Choose an option</option>
+      <div class="form-group">
+        <label for="status" class="form-label">Status*</label>
+        <select id="status" name="status" class="form-select" required>
+          <option value="" selected disabled>Select Status</option>
           <option value="NEW">NEW</option>
           <option value="REFORMED">REFORMED</option>
-          <!-- <option value="DELIVERY">DELIVERY</option>
-            <option value="OTHER PROCESSES">OTHER PROCESSES</option>
-            <option value="REJECT">REJECT</option> -->
         </select>
       </div>
 
-      <div style="margin-bottom: 15px">
-        <label for="quantity" style="display: block; margin-bottom: 5px"
-          >Quantity*</label
-        >
-        <div style="display: flex; align-items: center">
-          <input
-            type="number"
-            id="quantity"
-            name="quantity"
-            value="0"
-            min="0"
-            style="
-              width: 100%;
-              padding: 8px;
-              border: 1px solid #ccc;
-              border-radius: 4px;
-            "
-            required
-          />
-          <button
-            type="button"
-            onclick="decrementQuantity()"
-            style="
-              margin-left: 5px;
-              padding: 8px 12px;
-              background: #fff;
-              border: 1px solid #ccc;
-            "
-          >
-            -
-          </button>
-          <button
-            type="button"
-            onclick="incrementQuantity()"
-            style="
-              margin-left: 5px;
-              padding: 8px 12px;
-              background: #fff;
-              border: 1px solid #ccc;
-            "
-          >
-            +
-          </button>
-        </div>
+      <div class="form-group">
+        <label for="quantity" class="form-label">Quantity</label>
+        <input
+          type="number"
+          id="quantity"
+          name="quantity"
+          value="0"
+          min="0"
+          class="form-control"
+          required
+        />
       </div>
 
-      <div style="margin-bottom: 15px">
-        <label for="pallet_position" style="display: block; margin-bottom: 5px"
+      <div class="form-group">
+        <label for="pallet_position" class="form-label"
           >Pallet Position No.*</label
         >
-        <div style="display: flex; align-items: center">
+        <div class="input-group">
           <input
             type="text"
             id="pallet_position"
             name="pallet_position"
             placeholder="e.g., 0040"
-            style="
-              width: 100%;
-              padding: 8px;
-              border: 1px solid #ccc;
-              border-radius: 4px;
-            "
+            class="form-control"
             required
             readonly
           />
           <button
             type="button"
             id="selectPalletButton"
-            style="
-              margin-left: 5px;
-              padding: 8px 12px;
-              background-color: #2c5e2e;
-              color: white;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-            "
+            class="select-position-btn"
           >
             Select Position
           </button>
         </div>
       </div>
 
-      <div style="margin-bottom: 15px">
-        <label for="date" style="display: block; margin-bottom: 5px"
-          >Date*</label
-        >
+      <div class="form-group">
+        <label for="date" class="form-label">Date</label>
         <input
           type="date"
           id="date"
           name="date"
           value="{% now 'Y-m-d' %}"
-          style="
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-          "
+          class="form-control"
           required
         />
       </div>
 
-      <p style="margin-bottom: 15px">*required</p>
-
-      <button
-        type="submit"
-        style="
-          background-color: #2c5e2e;
-          color: white;
-          padding: 10px 20px;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-        "
-      >
-        Submit Details
-      </button>
+      <div class="text-right">
+        <button type="submit" class="submit-btn">Submit Entry</button>
+      </div>
     </form>
   </div>
 </div>
 
+<!-- Include Font Awesome for the QR code icon -->
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+/>
+
 <!-- Include the html5-qrcode library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.4/html5-qrcode.min.js"></script>
 <script>
-  // Quantity functions
-  function incrementQuantity() {
-    var quantityInput = document.getElementById("quantity");
-    quantityInput.value = parseInt(quantityInput.value) + 1;
-  }
-
-  function decrementQuantity() {
-    var quantityInput = document.getElementById("quantity");
-    var currentValue = parseInt(quantityInput.value);
-    if (currentValue > 0) {
-      quantityInput.value = currentValue - 1;
-    }
-  }
-
-  // QR Code Scanner
+  // Consolidate all DOM ready code into a single event listener
   document.addEventListener("DOMContentLoaded", function () {
+    // QR Code Scanner functionality
     const scanButton = document.getElementById("scanButton");
     const readerDiv = document.getElementById("reader");
     const scanResult = document.getElementById("scanResult");
     let html5QrCode;
 
+    // Initialize reader div with display: none
+    readerDiv.style.display = "none";
+
     scanButton.addEventListener("click", function () {
       if (readerDiv.style.display === "none") {
         // Show the scanner
         readerDiv.style.display = "block";
-        scanButton.textContent = "Cancel Scan";
+        scanButton.innerHTML = '<i class="fas fa-times"></i> Cancel Scan';
 
         // Initialize the scanner
         html5QrCode = new Html5Qrcode("reader");
         const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
-        html5QrCode.start(
-          { facingMode: "environment" },
-          config,
-          onScanSuccess,
-          onScanFailure
-        );
+        html5QrCode
+          .start(
+            { facingMode: "environment" },
+            config,
+            onScanSuccess,
+            onScanFailure
+          )
+          .catch((error) => {
+            console.error("QR Scanner initialization error:", error);
+            scanResult.textContent =
+              "Failed to start scanner. Please check camera permissions.";
+            stopScanner();
+          });
       } else {
         // Hide the scanner
         stopScanner();
@@ -370,64 +411,36 @@
           .stop()
           .then(() => {
             readerDiv.style.display = "none";
-            scanButton.textContent = "Scan QR Code";
+            scanButton.innerHTML = '<i class="fas fa-qrcode"></i> Scan QR Code';
           })
           .catch((err) => {
             console.error("Error stopping scanner:", err);
           });
       }
     }
-  });
-  
-  // Warehouse Layout Modal
-  document.addEventListener("DOMContentLoaded", function () {
-    // Get the pallet position input field and the select button
+
+    // Warehouse Layout Modal functionality
     const palletPositionInput = document.getElementById("pallet_position");
     const selectPalletButton = document.getElementById("selectPalletButton");
 
     // Create a modal container for the warehouse layout
     const modalContainer = document.createElement("div");
     modalContainer.id = "warehouseLayoutModal";
-    modalContainer.style.display = "none";
-    modalContainer.style.position = "fixed";
-    modalContainer.style.top = "0";
-    modalContainer.style.left = "0";
-    modalContainer.style.width = "100%";
-    modalContainer.style.height = "100%";
-    modalContainer.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
-    modalContainer.style.zIndex = "9999";
+    modalContainer.className = "modal";
 
     // Create a modal content container
     const modalContent = document.createElement("div");
-    modalContent.style.position = "relative";
-    modalContent.style.width = "90%";
-    modalContent.style.height = "90%";
-    modalContent.style.margin = "2% auto";
-    modalContent.style.backgroundColor = "#fff";
-    modalContent.style.padding = "20px";
-    modalContent.style.boxSizing = "border-box";
-    modalContent.style.overflow = "hidden";
+    modalContent.className = "modal-content";
 
     // Create a close button
     const closeButton = document.createElement("button");
     closeButton.textContent = "Close";
-    closeButton.style.position = "absolute";
-    closeButton.style.top = "10px";
-    closeButton.style.right = "10px";
-    closeButton.style.padding = "5px 10px";
-    closeButton.style.backgroundColor = "#2c5e2e";
-    closeButton.style.color = "white";
-    closeButton.style.border = "none";
-    closeButton.style.borderRadius = "4px";
-    closeButton.style.cursor = "pointer";
+    closeButton.className = "modal-close";
 
     // Create an iframe to load the warehouse layout
     const iframe = document.createElement("iframe");
     iframe.id = "warehouseLayoutFrame";
-    iframe.style.width = "100%";
-    iframe.style.height = "calc(100% - 40px)";
-    iframe.style.border = "none";
-    iframe.style.marginTop = "40px";
+    iframe.className = "modal-iframe";
     iframe.src = "{% url 'receive_form:warehouse_layout' %}"; // Update this path to match your warehouse layout URL
 
     // Append everything to the DOM
