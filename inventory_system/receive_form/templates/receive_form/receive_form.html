@@ -208,7 +208,7 @@
     color: #307634;
     font-weight: 600;
   }
-  
+
   /* Confirmation modal styles */
   .confirmation-modal {
     display: block;
@@ -220,7 +220,7 @@
     background-color: rgba(0, 0, 0, 0.7);
     z-index: 9999;
   }
-  
+
   .confirmation-content {
     position: relative;
     width: 90%;
@@ -232,25 +232,25 @@
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
-  
+
   .confirmation-header {
     display: flex;
     align-items: center;
     margin-bottom: 20px;
     color: #307634;
   }
-  
+
   .confirmation-header i {
     font-size: 32px;
     margin-right: 15px;
   }
-  
+
   .confirmation-header h3 {
     margin: 0;
     font-size: 20px;
     font-weight: 600;
   }
-  
+
   .confirmation-details {
     margin-bottom: 20px;
     border: 1px solid #e9ecef;
@@ -258,27 +258,27 @@
     padding: 15px;
     background-color: #f8f9fa;
   }
-  
+
   .detail-row {
     display: flex;
     margin-bottom: 10px;
   }
-  
+
   .detail-label {
     width: 40%;
     font-weight: 500;
     color: #495057;
   }
-  
+
   .detail-value {
     width: 60%;
     color: #212529;
   }
-  
+
   .confirmation-footer {
     text-align: center;
   }
-  
+
   .confirmation-button {
     background-color: #307634;
     color: white;
@@ -420,7 +420,7 @@
       <i class="fas fa-check-circle"></i>
       <h3>Stock Entry Successful</h3>
     </div>
-    
+
     <div class="confirmation-details">
       <div class="detail-row">
         <div class="detail-label">Production ID:</div>
@@ -459,9 +459,11 @@
         <div class="detail-value">{{ success_data.date }}</div>
       </div>
     </div>
-    
+
     <div class="confirmation-footer">
-      <button class="confirmation-button" id="confirmationCloseBtn">Continue</button>
+      <button class="confirmation-button" id="confirmationCloseBtn">
+        Continue
+      </button>
     </div>
   </div>
 </div>
@@ -514,6 +516,80 @@
         // Hide the scanner
         stopScanner();
       }
+    });
+
+    const stockForm = document.getElementById("stockForm");
+    stockForm.addEventListener("submit", function (event) {
+      const palletPositionInput = document.getElementById("pallet_position");
+      const palletPositionValue = palletPositionInput.value.trim();
+
+      if (palletPositionValue === "") {
+        event.preventDefault();
+
+        // Create error message element if it doesn't exist
+        let errorMsg = document.getElementById("pallet-position-error");
+        if (!errorMsg) {
+          errorMsg = document.createElement("div");
+          errorMsg.id = "pallet-position-error";
+          errorMsg.className = "error-message";
+          errorMsg.style.color = "red";
+          errorMsg.style.fontSize = "0.85rem";
+          errorMsg.style.marginTop = "5px";
+          palletPositionInput.parentNode.appendChild(errorMsg);
+        }
+
+        errorMsg.textContent = "Please select a pallet position";
+        palletPositionInput.style.borderColor = "red";
+
+        // Scroll to and focus on the selectPalletButton
+        document.getElementById("selectPalletButton").focus();
+      }
+    });
+
+    // Clear error when user clicks select position button
+    document
+      .getElementById("selectPalletButton")
+      .addEventListener("click", function () {
+        const errorMsg = document.getElementById("pallet-position-error");
+        if (errorMsg) {
+          errorMsg.textContent = "";
+        }
+        document.getElementById("pallet_position").style.borderColor = "";
+      });
+
+    // Form validation for quantity
+    stockForm.addEventListener("submit", function (event) {
+      const quantityInput = document.getElementById("quantity");
+      const quantityValue = parseInt(quantityInput.value);
+
+      if (quantityValue <= 0) {
+        event.preventDefault();
+
+        // Create error message element if it doesn't exist
+        let errorMsg = document.getElementById("quantity-error");
+        if (!errorMsg) {
+          errorMsg = document.createElement("div");
+          errorMsg.id = "quantity-error";
+          errorMsg.className = "error-message";
+          errorMsg.style.color = "red";
+          errorMsg.style.fontSize = "0.85rem";
+          errorMsg.style.marginTop = "5px";
+          quantityInput.parentNode.appendChild(errorMsg);
+        }
+
+        errorMsg.textContent = "Quantity must be greater than 0";
+        quantityInput.style.borderColor = "red";
+        quantityInput.focus();
+      }
+    });
+
+    // Clear error when user starts typing in quantity field
+    document.getElementById("quantity").addEventListener("input", function () {
+      const errorMsg = document.getElementById("quantity-error");
+      if (errorMsg) {
+        errorMsg.textContent = "";
+      }
+      this.style.borderColor = "";
     });
 
     function onScanSuccess(decodedText, decodedResult) {
@@ -678,13 +754,15 @@
         modalContainer.style.display = "none";
       }
     });
-    
+
     // Confirmation modal functionality
     const confirmationModal = document.getElementById("confirmationModal");
-    const confirmationCloseBtn = document.getElementById("confirmationCloseBtn");
-    
+    const confirmationCloseBtn = document.getElementById(
+      "confirmationCloseBtn"
+    );
+
     if (confirmationCloseBtn) {
-      confirmationCloseBtn.addEventListener("click", function() {
+      confirmationCloseBtn.addEventListener("click", function () {
         window.location.href = "{% url 'receive_form:receive_form' %}";
       });
     }
