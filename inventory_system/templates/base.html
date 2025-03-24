@@ -194,12 +194,12 @@
             {% if user.is_authenticated %}
             <li><a href="{% url 'account:dashboard' %}">Dashboard</a></li>
             <li>
-              <a href="{% url 'receive_form:receive_form' %}"
+              <a href="{% url 'forms:receive_form' %}"
                 >Receiving Inventory</a
               >
             </li>
             <li>
-              <a href="{% url 'release_form:release_form' %}"
+              <a href="{% url 'forms:release_form' %}"
                 >Releasing Inventory</a
               >
             </li>
