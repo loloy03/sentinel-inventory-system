@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
+import json
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
@@ -157,5 +158,38 @@ def warehouse_outside(request):
 
 
 def warehouse_area(request):
-    """Render the warehouse layout page"""
-    return render(request, "receive_form/warehouse_layouts/warehouse_area.html")
+    """Render the warehouse layout page with database records"""
+    # Get all received stock records
+    pallet_records = ReceivedStock.objects.all()
+
+    # Convert to a format that can be used in JavaScript
+    # Aggregate quantities for the same pallet position
+    pallet_data = {}
+
+    for record in pallet_records:
+        pallet_code = record.pallet_position
+
+        if pallet_code in pallet_data:
+            # Add to existing quantity for this pallet position
+            pallet_data[pallet_code]["quantity"] += record.quantity
+
+            # Update the date to the most recent one
+            record_date = record.date.strftime("%m/%d/%Y")
+            if record_date > pallet_data[pallet_code]["date"]:
+                pallet_data[pallet_code]["date"] = record_date
+        else:
+            # Create new entry for this pallet position
+            pallet_data[pallet_code] = {
+                "production_id": record.production_id,
+                "product": record.product,
+                "color": record.color,
+                "quantity": record.quantity,
+                "date": record.date.strftime("%m/%d/%Y"),
+                "status": record.status,
+            }
+
+    return render(
+        request,
+        "receive_form/warehouse_layouts/warehouse_area.html",
+        {"pallet_data_json": json.dumps(pallet_data)},
+    )
