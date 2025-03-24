@@ -165,3 +165,7 @@ button {
   padding: 5px 10px;
   cursor: pointer;
 }
+
+.warehouse-cell.insufficient {
+  background-color: #ffaaaa; /* Light red for insufficient stock */
+}
