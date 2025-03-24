@@ -154,7 +154,7 @@ def get_google_sheet(status):
 
 def warehouse_outside(request):
     """Render the warehouse layout page"""
-    return render(request, "receive_form/warehouse_layouts/warehouse_outside.html")
+    return render(request, "warehouse_layouts/warehouse_outside.html")
 
 
 def warehouse_area(request):
@@ -190,6 +190,6 @@ def warehouse_area(request):
 
     return render(
         request,
-        "receive_form/warehouse_layouts/warehouse_area.html",
+        "warehouse_layouts/warehouse_area.html",
         {"pallet_data_json": json.dumps(pallet_data)},
     )
