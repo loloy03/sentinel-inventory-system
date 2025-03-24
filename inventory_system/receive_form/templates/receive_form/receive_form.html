@@ -1,5 +1,4 @@
-{% extends "base.html" %} {% block content %}
-{%load static%}
+{% extends "base.html" %} {% block content %} {%load static%}
 <head>
   <link rel="stylesheet" href="{% static 'css/forms_styles.css' %}" />
 </head>
@@ -198,6 +197,12 @@
     const scanResult = document.getElementById("scanResult");
     let html5QrCode;
 
+    // Initial check on page load
+    updateSelectPositionButtonState();
+    document
+      .getElementById("quantity")
+      .addEventListener("input", updateSelectPositionButtonState);
+
     // Initialize reader div with display: none
     readerDiv.style.display = "none";
 
@@ -376,6 +381,43 @@
           .catch((err) => {
             console.error("Error stopping scanner:", err);
           });
+      }
+    }
+    function updateSelectPositionButtonState() {
+      const quantityInput = document.getElementById("quantity");
+      const selectPalletButton = document.getElementById("selectPalletButton");
+      const quantityValue = parseInt(quantityInput.value) || 0;
+
+      // Disable button if quantity is 0 or less
+      if (quantityValue <= 0) {
+        selectPalletButton.disabled = true;
+        selectPalletButton.classList.add("disabled-btn");
+        selectPalletButton.title =
+          "Please enter a quantity greater than 0 first";
+
+        // Add or update the message below the button
+        let infoMsg = document.getElementById("pallet-position-info");
+        if (!infoMsg) {
+          infoMsg = document.createElement("div");
+          infoMsg.id = "pallet-position-info";
+          infoMsg.className = "info-message";
+          infoMsg.style.color = "#666";
+          infoMsg.style.fontSize = "0.85rem";
+          infoMsg.style.marginTop = "5px";
+          selectPalletButton.closest(".form-group").appendChild(infoMsg);
+        }
+        infoMsg.textContent =
+          "Enter a quantity greater than 0 to enable position selection";
+      } else {
+        selectPalletButton.disabled = false;
+        selectPalletButton.classList.remove("disabled-btn");
+        selectPalletButton.title = "Click to select pallet position";
+
+        // Remove the message if it exists
+        const infoMsg = document.getElementById("pallet-position-info");
+        if (infoMsg) {
+          infoMsg.textContent = "";
+        }
       }
     }
 
