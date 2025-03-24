@@ -535,7 +535,9 @@
           errorMsg.style.color = "red";
           errorMsg.style.fontSize = "0.85rem";
           errorMsg.style.marginTop = "5px";
-          palletPositionInput.parentNode.appendChild(errorMsg);
+
+          // Change this line to append to the parent form-group instead of the input-group
+          palletPositionInput.closest(".form-group").appendChild(errorMsg);
         }
 
         errorMsg.textContent = "Please select a pallet position";
