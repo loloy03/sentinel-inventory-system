@@ -1,0 +1,573 @@
+{% extends "base.html" %} {% block content %} {% load static %}
+<head>
+  <link rel="stylesheet" href="{% static 'css/forms_styles.css' %}" />
+</head>
+
+<div class="container">
+  <div class="form-container">
+    <h2 class="form-title">RELEASE STOCK DATA ENTRY</h2>
+
+    <!-- QR Code Scanner Button -->
+    <div class="form-group">
+      <button id="scanButton" class="scan-btn">
+        <i class="fas fa-qrcode"></i> Scan QR Code
+      </button>
+      <div id="reader" class="qr-reader"></div>
+      <div id="scanResult" class="scan-result"></div>
+    </div>
+
+    <form method="post" action="" id="stockForm">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label for="production_code" class="form-label"
+          >Production Code* (Enter a number)</label
+        >
+        <input
+          type="text"
+          id="production_code"
+          name="production_code"
+          placeholder="e.g., 001-3-24S04"
+          class="form-control"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="product_released" class="form-label">Product*</label>
+        <select
+          id="product_released"
+          name="product_released"
+          class="form-select"
+          required
+        >
+          <option value="" selected disabled>Choose an option</option>
+          <option value="Trolley">Trolley</option>
+          <option value="Armchair">Armchair</option>
+          <option value="Pallets">Pallets</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="color" class="form-label">Color*</label>
+        <select id="color" name="color" class="form-select" required>
+          <option value="" selected disabled>Choose an option</option>
+          <option value="green">Green</option>
+          <option value="black">Black</option>
+          <option value="orange">Orange</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="status" class="form-label">Status*</label>
+        <select id="status" name="status" class="form-select" required>
+          <option value="" selected disabled>Select Status</option>
+          <option value="DELIVERY">DELIVERY</option>
+          <option value="OTHER PROCESSES">OTHER PROCESSES</option>
+          <option value="REJECT">REJECT</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="quantity" class="form-label">Quantity*</label>
+        <div class="input-group">
+          <input
+            type="number"
+            id="quantity"
+            name="quantity"
+            value="0"
+            min="0"
+            class="form-control"
+            required
+          />
+          <button
+            type="button"
+            onclick="decrementQuantity()"
+            class="select-position-btn"
+          >
+            -
+          </button>
+          <button
+            type="button"
+            onclick="incrementQuantity()"
+            class="select-position-btn"
+          >
+            +
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="pallet_position" class="form-label"
+          >Pallet Position No.*</label
+        >
+        <div class="input-group">
+          <input
+            type="text"
+            id="pallet_position"
+            name="pallet_position"
+            placeholder="e.g., 0040"
+            class="form-control"
+            required
+            readonly
+          />
+          <button
+            type="button"
+            id="selectPalletButton"
+            class="select-position-btn"
+          >
+            Select Pallet Position
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="date" class="form-label">Date*</label>
+        <input
+          type="date"
+          id="date"
+          name="date"
+          value="{% now 'Y-m-d' %}"
+          class="form-control"
+          required
+        />
+      </div>
+
+      <div class="text-right">
+        <button type="submit" class="submit-btn">Submit Entry</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Confirmation Modal -->
+{% if success_data %}
+<div class="confirmation-modal" id="confirmationModal">
+  <div class="confirmation-content">
+    <div class="confirmation-header">
+      <i class="fas fa-check-circle"></i>
+      <h3>Stock Entry Successful</h3>
+    </div>
+
+    <div class="confirmation-details">
+      <div class="detail-row">
+        <div class="detail-label">Production ID:</div>
+        <div class="detail-value">{{ success_data.production_code }}</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Product:</div>
+        <div class="detail-value">{{ success_data.product }}</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Color:</div>
+        <div class="detail-value">{{ success_data.color }}</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Status:</div>
+        <div class="detail-value">{{ success_data.status }}</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Quantity:</div>
+        <div class="detail-value">{{ success_data.quantity }}</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Pallet Position:</div>
+        <div class="detail-value">{{ success_data.pallet_position }}</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Warehouse ID:</div>
+        <div class="detail-value">{{ success_data.warehouse_id }}</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Item Code:</div>
+        <div class="detail-value">{{ success_data.item_code }}</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">Date:</div>
+        <div class="detail-value">{{ success_data.date }}</div>
+      </div>
+    </div>
+
+    <div class="confirmation-footer">
+      <button class="confirmation-button" id="confirmationCloseBtn">
+        Continue
+      </button>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Include Font Awesome for the QR code icon -->
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+/>
+
+<!-- Include the html5-qrcode library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.4/html5-qrcode.min.js"></script>
+<script>
+  // Consolidate all DOM ready code into a single event listener
+  document.addEventListener("DOMContentLoaded", function () {
+    // Quantity functions
+    function incrementQuantity() {
+      var quantityInput = document.getElementById("quantity");
+      quantityInput.value = parseInt(quantityInput.value) + 1;
+      updateSelectPositionButtonState();
+    }
+
+    function decrementQuantity() {
+      var quantityInput = document.getElementById("quantity");
+      var currentValue = parseInt(quantityInput.value);
+      if (currentValue > 0) {
+        quantityInput.value = currentValue - 1;
+        updateSelectPositionButtonState();
+      }
+    }
+
+    // Make the increment/decrement functions available globally
+    window.incrementQuantity = incrementQuantity;
+    window.decrementQuantity = decrementQuantity;
+
+    // QR Code Scanner functionality
+    const scanButton = document.getElementById("scanButton");
+    const readerDiv = document.getElementById("reader");
+    const scanResult = document.getElementById("scanResult");
+    let html5QrCode;
+
+    // Initial check on page load
+    updateSelectPositionButtonState();
+    document
+      .getElementById("quantity")
+      .addEventListener("input", updateSelectPositionButtonState);
+
+    // Initialize reader div with display: none
+    readerDiv.style.display = "none";
+
+    scanButton.addEventListener("click", function () {
+      if (readerDiv.style.display === "none") {
+        // Show the scanner
+        readerDiv.style.display = "block";
+        scanButton.innerHTML = '<i class="fas fa-times"></i> Cancel Scan';
+
+        // Initialize the scanner
+        html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+        html5QrCode
+          .start(
+            { facingMode: "environment" },
+            config,
+            onScanSuccess,
+            onScanFailure
+          )
+          .catch((error) => {
+            console.error("QR Scanner initialization error:", error);
+            scanResult.textContent =
+              "Failed to start scanner. Please check camera permissions.";
+            stopScanner();
+          });
+      } else {
+        // Hide the scanner
+        stopScanner();
+      }
+    });
+
+    const stockForm = document.getElementById("stockForm");
+    stockForm.addEventListener("submit", function (event) {
+      const palletPositionInput = document.getElementById("pallet_position");
+      const palletPositionValue = palletPositionInput.value.trim();
+
+      if (palletPositionValue === "") {
+        event.preventDefault();
+
+        // Create error message element if it doesn't exist
+        let errorMsg = document.getElementById("pallet-position-error");
+        if (!errorMsg) {
+          errorMsg = document.createElement("div");
+          errorMsg.id = "pallet-position-error";
+          errorMsg.className = "error-message";
+          errorMsg.style.color = "red";
+          errorMsg.style.fontSize = "0.85rem";
+          errorMsg.style.marginTop = "5px";
+
+          // Change this line to append to the parent form-group instead of the input-group
+          palletPositionInput.closest(".form-group").appendChild(errorMsg);
+        }
+
+        errorMsg.textContent = "Please select a pallet position";
+        palletPositionInput.style.borderColor = "red";
+
+        // Scroll to and focus on the selectPalletButton
+        document.getElementById("selectPalletButton").focus();
+      }
+    });
+
+    // Clear error when user clicks select position button
+    document
+      .getElementById("selectPalletButton")
+      .addEventListener("click", function () {
+        const errorMsg = document.getElementById("pallet-position-error");
+        if (errorMsg) {
+          errorMsg.textContent = "";
+        }
+        document.getElementById("pallet_position").style.borderColor = "";
+      });
+
+    // Form validation for quantity
+    stockForm.addEventListener("submit", function (event) {
+      const quantityInput = document.getElementById("quantity");
+      const quantityValue = parseInt(quantityInput.value);
+
+      if (quantityValue <= 0) {
+        event.preventDefault();
+
+        // Create error message element if it doesn't exist
+        let errorMsg = document.getElementById("quantity-error");
+        if (!errorMsg) {
+          errorMsg = document.createElement("div");
+          errorMsg.id = "quantity-error";
+          errorMsg.className = "error-message";
+          errorMsg.style.color = "red";
+          errorMsg.style.fontSize = "0.85rem";
+          errorMsg.style.marginTop = "5px";
+          quantityInput.parentNode.appendChild(errorMsg);
+        }
+
+        errorMsg.textContent = "Quantity must be greater than 0";
+        quantityInput.style.borderColor = "red";
+        quantityInput.focus();
+      }
+    });
+
+    // Clear error when user starts typing in quantity field
+    document.getElementById("quantity").addEventListener("input", function () {
+      const errorMsg = document.getElementById("quantity-error");
+      if (errorMsg) {
+        errorMsg.textContent = "";
+      }
+      this.style.borderColor = "";
+    });
+
+    function onScanSuccess(decodedText, decodedResult) {
+      // Stop the scanner
+      stopScanner();
+
+      // Display success message
+      scanResult.textContent = "QR Code scanned successfully!";
+
+      try {
+        // Parse the QR code data (assuming it's in JSON format)
+        const data = JSON.parse(decodedText);
+
+        // Fill the form with the scanned data
+        if (data.production_code)
+          document.getElementById("production_code").value =
+            data.production_code;
+        if (data.product) {
+          const productSelect = document.getElementById("product_released");
+          for (let i = 0; i < productSelect.options.length; i++) {
+            if (productSelect.options[i].value === data.product) {
+              productSelect.selectedIndex = i;
+              break;
+            }
+          }
+        }
+        if (data.color) {
+          const colorSelect = document.getElementById("color");
+          for (let i = 0; i < colorSelect.options.length; i++) {
+            if (colorSelect.options[i].value === data.color) {
+              colorSelect.selectedIndex = i;
+              break;
+            }
+          }
+        }
+        if (data.status) {
+          const statusSelect = document.getElementById("status");
+          for (let i = 0; i < statusSelect.options.length; i++) {
+            if (statusSelect.options[i].value === data.status) {
+              statusSelect.selectedIndex = i;
+              break;
+            }
+          }
+        }
+        if (data.quantity) {
+          document.getElementById("quantity").value = data.quantity;
+          updateSelectPositionButtonState();
+        }
+        if (data.pallet_position)
+          document.getElementById("pallet_position").value =
+            data.pallet_position;
+        if (data.date) document.getElementById("date").value = data.date;
+      } catch (error) {
+        console.error("Error parsing QR code data:", error);
+        scanResult.textContent =
+          "Error parsing QR code data. Please try again.";
+      }
+    }
+
+    function onScanFailure(error) {
+      // Handle scan failure silently
+      console.warn(`QR code scanning failed: ${error}`);
+    }
+
+    function stopScanner() {
+      if (html5QrCode) {
+        html5QrCode
+          .stop()
+          .then(() => {
+            readerDiv.style.display = "none";
+            scanButton.innerHTML = '<i class="fas fa-qrcode"></i> Scan QR Code';
+          })
+          .catch((err) => {
+            console.error("Error stopping scanner:", err);
+          });
+      }
+    }
+
+    function updateSelectPositionButtonState() {
+      const quantityInput = document.getElementById("quantity");
+      const selectPalletButton = document.getElementById("selectPalletButton");
+      const palletPositionInput = document.getElementById("pallet_position");
+      const quantityValue = parseInt(quantityInput.value) || 0;
+
+      // Disable button if quantity is 0 or less
+      if (quantityValue <= 0) {
+        selectPalletButton.disabled = true;
+        selectPalletButton.classList.add("disabled-btn");
+        selectPalletButton.title =
+          "Please enter a quantity greater than 0 first";
+
+        // Change the placeholder text to show the message
+        palletPositionInput.placeholder =
+          "The quantity must greater than 0 to pick pallet position";
+      } else {
+        selectPalletButton.disabled = false;
+        selectPalletButton.classList.remove("disabled-btn");
+        selectPalletButton.title = "Click to select pallet position";
+
+        // Restore the original placeholder
+        palletPositionInput.placeholder = "Pick Pallet Position";
+      }
+    }
+
+    // Warehouse Layout Modal functionality
+    const palletPositionInput = document.getElementById("pallet_position");
+    const selectPalletButton = document.getElementById("selectPalletButton");
+
+    // Create a modal container for the warehouse layout
+    const modalContainer = document.createElement("div");
+    modalContainer.id = "warehouseLayoutModal";
+    modalContainer.className = "modal";
+
+    // Create a modal content container
+    const modalContent = document.createElement("div");
+    modalContent.className = "modal-content";
+
+    // Create a close button
+    const closeButton = document.createElement("button");
+    closeButton.textContent = "Close";
+    closeButton.className = "modal-close";
+
+    // Create a tabs container
+    const tabsContainer = document.createElement("div");
+    tabsContainer.className = "warehouse-tabs";
+
+    // Create two tabs
+    const insideTab = document.createElement("div");
+    insideTab.className = "warehouse-tab active";
+    insideTab.id = "tab-inside";
+    insideTab.textContent = "Warehouse Area";
+
+    const outsideTab = document.createElement("div");
+    outsideTab.className = "warehouse-tab";
+    outsideTab.id = "tab-outside";
+    outsideTab.textContent = "Warehouse Outside";
+
+    // Add tabs to the tabs container
+    tabsContainer.appendChild(insideTab);
+    tabsContainer.appendChild(outsideTab);
+
+    // Create iframes for both warehouse layouts
+    const insideIframe = document.createElement("iframe");
+    insideIframe.id = "warehouseInsideFrame";
+    insideIframe.className = "modal-iframe";
+    insideIframe.src = "{% url 'receive_form:warehouse_area' %}"; // Using the receive_form URL
+    insideIframe.style.display = "block"; // Start with inside iframe visible
+
+    const outsideIframe = document.createElement("iframe");
+    outsideIframe.id = "warehouseOutsideFrame";
+    outsideIframe.className = "modal-iframe";
+    outsideIframe.src = "{% url 'receive_form:warehouse_outside' %}"; // Using the receive_form URL
+    outsideIframe.style.display = "none"; // Start with outside iframe hidden
+
+    // Append everything to the DOM
+    modalContent.appendChild(closeButton);
+    modalContent.appendChild(tabsContainer);
+    modalContent.appendChild(insideIframe);
+    modalContent.appendChild(outsideIframe);
+    modalContainer.appendChild(modalContent);
+    document.body.appendChild(modalContainer);
+
+    // Add event listener to the select button
+    selectPalletButton.addEventListener("click", function () {
+      const quantityInput = document.getElementById("quantity");
+      const quantityValue = parseInt(quantityInput.value) || 0;
+
+      // Pass quantity value and operation type to the modal
+      const insideIframe = document.getElementById("warehouseInsideFrame");
+      const outsideIframe = document.getElementById("warehouseOutsideFrame");
+
+      // Send message to both iframes (only the visible one will process it)
+      insideIframe.contentWindow.postMessage(
+        { type: "setQuantity", quantity: quantityValue, operation: "subtract" },
+        "*"
+      );
+      outsideIframe.contentWindow.postMessage(
+        { type: "setQuantity", quantity: quantityValue, operation: "subtract" },
+        "*"
+      );
+
+      modalContainer.style.display = "block";
+    });
+    // Add event listener to the close button
+    closeButton.addEventListener("click", function () {
+      modalContainer.style.display = "none";
+    });
+
+    // Add event listeners for tab switching
+    insideTab.addEventListener("click", function () {
+      insideTab.classList.add("active");
+      outsideTab.classList.remove("active");
+      insideIframe.style.display = "block";
+      outsideIframe.style.display = "none";
+    });
+
+    outsideTab.addEventListener("click", function () {
+      outsideTab.classList.add("active");
+      insideTab.classList.remove("active");
+      outsideIframe.style.display = "block";
+      insideIframe.style.display = "none";
+    });
+
+    // Listen for messages from the iframes
+    window.addEventListener("message", function (event) {
+      if (event.data && event.data.type === "palletSelected") {
+        palletPositionInput.value = event.data.palletCode;
+        modalContainer.style.display = "none";
+      }
+    });
+
+    // Confirmation modal functionality
+    const confirmationModal = document.getElementById("confirmationModal");
+    const confirmationCloseBtn = document.getElementById(
+      "confirmationCloseBtn"
+    );
+
+    if (confirmationCloseBtn) {
+      confirmationCloseBtn.addEventListener("click", function () {
+        window.location.href = "{% url 'receive_form:release_form' %}";
+      });
+    }
+  });
+</script>
+{% endblock %}
