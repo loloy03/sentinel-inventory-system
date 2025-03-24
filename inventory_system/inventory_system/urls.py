@@ -31,13 +31,13 @@ urlpatterns = [
     path(
         "receive_form/",
         include(
-            "receive_form.urls",
+            "forms.urls",
         ),
     ),
     path(
         "release_form/",
         include(
-            "release_form.urls",
+            "forms.urls",
         ),
     ),
     path("warehouse_layout/", include("warehouse_layout.urls")),
