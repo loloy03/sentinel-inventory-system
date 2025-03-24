@@ -491,13 +491,13 @@
     const insideIframe = document.createElement("iframe");
     insideIframe.id = "warehouseInsideFrame";
     insideIframe.className = "modal-iframe";
-    insideIframe.src = "{% url 'receive_form:warehouse_area' %}"; // Using the receive_form URL
+    insideIframe.src = "{% url 'forms:warehouse_area' %}"; // Using the receive_form URL
     insideIframe.style.display = "block"; // Start with inside iframe visible
 
     const outsideIframe = document.createElement("iframe");
     outsideIframe.id = "warehouseOutsideFrame";
     outsideIframe.className = "modal-iframe";
-    outsideIframe.src = "{% url 'receive_form:warehouse_outside' %}"; // Using the receive_form URL
+    outsideIframe.src = "{% url 'forms:warehouse_outside' %}"; // Using the receive_form URL
     outsideIframe.style.display = "none"; // Start with outside iframe hidden
 
     // Append everything to the DOM
@@ -565,7 +565,7 @@
 
     if (confirmationCloseBtn) {
       confirmationCloseBtn.addEventListener("click", function () {
-        window.location.href = "{% url 'receive_form:release_form' %}";
+        window.location.href = "{% url 'forms:release_form' %}";
       });
     }
   });
