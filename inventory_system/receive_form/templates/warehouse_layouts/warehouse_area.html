@@ -1,168 +1,12 @@
+{%load static%}
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Warehouse Inside</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        overflow: hidden;
-      }
-
-      .container {
-        position: relative;
-        width: 100%;
-        height: 85vh;
-        overflow: hidden;
-        background-color: white;
-        border: 1px solid #ccc;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        cursor: grab;
-      }
-
-      .draggable-area {
-        position: absolute;
-        cursor: grab;
-        transform-origin: 0 0;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        padding: 20px;
-        min-width: max-content;
-      }
-
-      .draggable-area:active {
-        cursor: grabbing;
-      }
-
-      .warehouse-section {
-        display: inline-block;
-        vertical-align: top;
-        margin: 10px;
-      }
-
-      .warehouse-table {
-        border-collapse: collapse;
-        background-color: #78b463;
-      }
-
-      .warehouse-header {
-        background-color: #78b463;
-        color: black;
-        text-align: center;
-        font-size: 24px;
-        padding: 10px;
-        font-weight: bold;
-        border: 1px solid black;
-      }
-
-      .warehouse-cell {
-        border: 1px dashed black;
-        text-align: center;
-        padding: 4px;
-        width: 60px;
-        height: 20px;
-        cursor: pointer;
-        font-size: 12px;
-      }
-
-      .warehouse-cell:hover {
-        background-color: #93c782;
-      }
-
-      .warehouse-subheader {
-        background-color: #6ca55b;
-        color: black;
-        text-align: center;
-        font-size: 18px;
-        padding: 5px;
-        font-weight: bold;
-        border: 1px solid black;
-      }
-
-      .popup {
-        display: none;
-        position: fixed;
-        background-color: white;
-        border: 2px solid #666;
-        padding: 10px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-        z-index: 1000;
-        border-radius: 5px;
-        max-width: 250px;
-        width: 80%;
-        font-size: 14px;
-      }
-
-      .popup-content {
-        margin-bottom: 10px;
-      }
-
-      .popup-buttons {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 15px;
-      }
-
-      .popup-close {
-        background-color: #555;
-        color: white;
-        border: none;
-        padding: 5px 10px;
-        cursor: pointer;
-        border-radius: 3px;
-      }
-
-      .popup-select {
-        background-color: #2c5e2e;
-        color: white;
-        border: none;
-        padding: 5px 10px;
-        cursor: pointer;
-        border-radius: 3px;
-      }
-
-      .controls {
-        margin-bottom: 10px;
-        border-radius: 5px;
-      }
-
-      .container:active {
-        cursor: grabbing;
-      }
-
-      .warehouse-layout {
-        display: flex;
-        flex-direction: row;
-        gap: 20px;
-      }
-
-      @media (max-width: 768px) {
-        .warehouse-cell {
-          padding: 8px;
-          width: 50px;
-          height: 16px;
-          font-size: 10px;
-        }
-
-        .popup {
-          max-width: 200px;
-          font-size: 12px;
-        }
-
-        .warehouse-layout {
-          flex-direction: column;
-        }
-      }
-
-      button {
-        margin-right: 10px;
-        padding: 5px 10px;
-        cursor: pointer;
-      }
-    </style>
+    <link rel="stylesheet" href="{% static 'css/warehouse_styles.css' %}" />
   </head>
   <!DOCTYPE html>
   <html lang="en">
@@ -232,8 +76,6 @@
               codeByColumn: true,
             },
           ];
-
-          
 
           // Generate warehouse layout
           generateWarehouseLayout();
