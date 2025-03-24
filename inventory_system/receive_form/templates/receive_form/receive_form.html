@@ -386,6 +386,7 @@
     function updateSelectPositionButtonState() {
       const quantityInput = document.getElementById("quantity");
       const selectPalletButton = document.getElementById("selectPalletButton");
+      const palletPositionInput = document.getElementById("pallet_position");
       const quantityValue = parseInt(quantityInput.value) || 0;
 
       // Disable button if quantity is 0 or less
@@ -395,29 +396,16 @@
         selectPalletButton.title =
           "Please enter a quantity greater than 0 first";
 
-        // Add or update the message below the button
-        let infoMsg = document.getElementById("pallet-position-info");
-        if (!infoMsg) {
-          infoMsg = document.createElement("div");
-          infoMsg.id = "pallet-position-info";
-          infoMsg.className = "info-message";
-          infoMsg.style.color = "#666";
-          infoMsg.style.fontSize = "0.85rem";
-          infoMsg.style.marginTop = "5px";
-          selectPalletButton.closest(".form-group").appendChild(infoMsg);
-        }
-        infoMsg.textContent =
-          "Enter a quantity greater than 0 to enable position selection";
+        // Change the placeholder text to show the message
+        palletPositionInput.placeholder =
+          "The quantity must greater than 0 to enable position selection";
       } else {
         selectPalletButton.disabled = false;
         selectPalletButton.classList.remove("disabled-btn");
         selectPalletButton.title = "Click to select pallet position";
 
-        // Remove the message if it exists
-        const infoMsg = document.getElementById("pallet-position-info");
-        if (infoMsg) {
-          infoMsg.textContent = "";
-        }
+        // Restore the original placeholder
+        palletPositionInput.placeholder = "e.g., 0040";
       }
     }
 
