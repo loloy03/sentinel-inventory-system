@@ -33,6 +33,7 @@
 
     <script>
       let formQuantity = 0;
+      let operationType = "add";
       const MAX_QUANTITY = 100;
       
       // Receive pallet data from Django view
@@ -41,7 +42,13 @@
       window.addEventListener("message", function (event) {
         if (event.data && event.data.type === "setQuantity") {
           formQuantity = event.data.quantity;
-          console.log("Received quantity:", formQuantity);
+          operationType = event.data.operation || "add"; // Set operation type from message
+          console.log(
+            "Received quantity:",
+            formQuantity,
+            "Operation:",
+            operationType
+          );
           // Update all cell colors when quantity changes
           updateCellColors();
         }
@@ -255,18 +262,29 @@
             }
 
             // Remove all status classes first
-            cell.classList.remove("danger", "has-data", "full");
+            cell.classList.remove("danger", "has-data", "full", "insufficient");
 
-            // Apply appropriate class based on quantity
-            if (dbQuantity >= 100) {
-              // Already full
-              cell.classList.add("full");
-            } else if (dbQuantity + formQuantity > 100) {
-              // Would exceed max with new quantity
-              cell.classList.add("danger");
-            } else if (dbQuantity > 0) {
-              // Has some data but not full
-              cell.classList.add("has-data");
+            if (operationType === "add") {
+              // Addition logic
+              if (dbQuantity >= 100) {
+                // Already full
+                cell.classList.add("full");
+              } else if (dbQuantity + formQuantity > 100) {
+                // Would exceed max with new quantity
+                cell.classList.add("danger");
+              } else if (dbQuantity > 0) {
+                // Has some data but not full
+                cell.classList.add("has-data");
+              }
+            } else if (operationType === "subtract") {
+              // Subtraction logic
+              if (dbQuantity < formQuantity) {
+                // Not enough quantity to deduct
+                cell.classList.add("insufficient");
+              } else if (dbQuantity > 0) {
+                // Has enough quantity
+                cell.classList.add("has-data");
+              }
             }
           });
         }
@@ -440,26 +458,40 @@
           // Get quantity from database or set to 0 if not found
           const dbQuantity = dbRecord ? dbRecord.quantity : 0;
 
-          // Calculate total quantity
-          const totalQuantity = dbQuantity + formQuantity;
+          // Calculate total quantity based on operation type
+          let totalQuantity, quantityStatus, quantityColor;
 
-          // Check status conditions
-          const isFull = dbQuantity >= 100;
-          const wouldExceed = totalQuantity > 100;
+          if (operationType === "add") {
+            // Addition logic
+            totalQuantity = dbQuantity + formQuantity;
 
-          // Color coding for quantity status
-          let quantityStatus = "Normal";
-          let quantityColor = "black";
+            if (dbQuantity >= 100) {
+              quantityStatus = "Already Full";
+              quantityColor = "red";
+            } else if (totalQuantity > 100) {
+              quantityStatus = "Would Exceed Maximum";
+              quantityColor = "red";
+            } else if (totalQuantity >= 80) {
+              quantityStatus = "Near Full";
+              quantityColor = "orange";
+            } else {
+              quantityStatus = "Normal";
+              quantityColor = "black";
+            }
+          } else {
+            // Subtraction logic
+            totalQuantity = dbQuantity - formQuantity;
 
-          if (isFull) {
-            quantityStatus = "Already Full";
-            quantityColor = "red";
-          } else if (wouldExceed) {
-            quantityStatus = "Would Exceed Maximum";
-            quantityColor = "red";
-          } else if (totalQuantity >= 80) {
-            quantityStatus = "Near Full";
-            quantityColor = "orange";
+            if (dbQuantity < formQuantity) {
+              quantityStatus = "Insufficient Stock";
+              quantityColor = "red";
+            } else if (totalQuantity === 0) {
+              quantityStatus = "Will Empty Stock";
+              quantityColor = "orange";
+            } else {
+              quantityStatus = "Normal";
+              quantityColor = "black";
+            }
           }
 
           // Get last updated date
@@ -469,29 +501,49 @@
 
           // Populate popup content with enhanced information
           popupContent.innerHTML = `
-            <h3>Pallet Information</h3>
-            <p><strong>Pallet Code:</strong> ${code}</p>
-            <p><strong>Section:</strong> ${section}</p>
-            <p><strong>Current Quantity:</strong> ${dbQuantity} units</p>
-            <p><strong>Your Input Quantity:</strong> ${formQuantity} units</p>
-            <p><strong>Total After Addition:</strong> <span style="color: ${quantityColor}; font-weight: bold">${totalQuantity} units (${quantityStatus})</span></p>
-            <p><strong>Maximum Allowed:</strong> 100 units</p>
-            <p><strong>Last Updated:</strong> ${lastUpdated}</p>
-            <p><strong>Any record in database:</strong> ${hasRecord}</p>
-          `;
+    <h3>Pallet Information</h3>
+    <p><strong>Pallet Code:</strong> ${code}</p>
+    <p><strong>Section:</strong> ${section}</p>
+    <p><strong>Current Quantity:</strong> ${dbQuantity} units</p>
+    <p><strong>Your ${
+      operationType === "add" ? "Input" : "Release"
+    } Quantity:</strong> ${formQuantity} units</p>
+    <p><strong>Total After ${
+      operationType === "add" ? "Addition" : "Release"
+    }:</strong> <span style="color: ${quantityColor}; font-weight: bold">${totalQuantity} units (${quantityStatus})</span></p>
+    <p><strong>Maximum Allowed:</strong> 100 units</p>
+    <p><strong>Last Updated:</strong> ${lastUpdated}</p>
+    <p><strong>Any record in database:</strong> ${hasRecord}</p>
+  `;
 
           // Enable or disable the select button based on quantity
           const popupSelect = document.getElementById("popup-select");
-          if (isFull || wouldExceed) {
-            popupSelect.disabled = true;
-            popupSelect.classList.add("button-disabled");
-            popupSelect.title = isFull
-              ? "Cannot select - Pallet is already full"
-              : "Cannot select - Maximum quantity (100) would be exceeded";
+
+          if (operationType === "add") {
+            // Addition logic
+            if (dbQuantity >= 100 || totalQuantity > 100) {
+              popupSelect.disabled = true;
+              popupSelect.classList.add("button-disabled");
+              popupSelect.title =
+                dbQuantity >= 100
+                  ? "Cannot select - Pallet is already full"
+                  : "Cannot select - Maximum quantity (100) would be exceeded";
+            } else {
+              popupSelect.disabled = false;
+              popupSelect.classList.remove("button-disabled");
+              popupSelect.title = "Select this pallet position";
+            }
           } else {
-            popupSelect.disabled = false;
-            popupSelect.classList.remove("button-disabled");
-            popupSelect.title = "Select this pallet position";
+            // Subtraction logic
+            if (dbQuantity < formQuantity) {
+              popupSelect.disabled = true;
+              popupSelect.classList.add("button-disabled");
+              popupSelect.title = "Cannot select - Not enough stock available";
+            } else {
+              popupSelect.disabled = false;
+              popupSelect.classList.remove("button-disabled");
+              popupSelect.title = "Select this pallet position";
+            }
           }
 
           // Position and show popup
