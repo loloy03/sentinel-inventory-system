@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>Warehouse Outside</title>
     <link rel="stylesheet" href="{% static 'css/warehouse_styles.css' %}" />
   </head>
   <body>
@@ -32,6 +32,21 @@
     </div>
 
     <script>
+      let formQuantity = 0;
+      const MAX_QUANTITY = 100;
+      
+      // Receive pallet data from Django view
+      const palletData = JSON.parse("{{ pallet_data_json|escapejs }}");
+
+      window.addEventListener("message", function (event) {
+        if (event.data && event.data.type === "setQuantity") {
+          formQuantity = event.data.quantity;
+          console.log("Received quantity:", formQuantity);
+          // Update all cell colors when quantity changes
+          updateCellColors();
+        }
+      });
+
       document.addEventListener("DOMContentLoaded", function () {
         // Warehouse configuration data
         const warehouseData = [
@@ -41,14 +56,15 @@
             rows: 14,
             startCode: 1296,
             prefix: "P",
+            codeByColumn: true,
           },
-
           {
             name: "WAREHOUSE: FINISHING",
             cols: 8,
             rows: 6,
             startCode: 1576,
             prefix: "P",
+            codeByColumn: true,
           },
           {
             name: "ENTRANCE",
@@ -56,6 +72,7 @@
             rows: 5,
             startCode: 2122,
             prefix: "P",
+            codeByColumn: true,
           },
         ];
 
@@ -149,20 +166,20 @@
             headerRow.appendChild(headerCell);
             table.appendChild(headerRow);
 
-            // Create rows and cells
+            // Calculate all codes for this section
             let codeCounter = warehouse.startCode;
             const cellCodes = [];
 
             // First calculate all codes by column
             for (let j = 0; j < warehouse.cols; j++) {
               for (let i = 0; i < warehouse.rows; i++) {
-                cellCodes.push(warehouse.prefix + codeCounter);
+                const code = warehouse.prefix + String(codeCounter).padStart(4, "0");
+                cellCodes.push(code);
                 codeCounter++;
               }
             }
 
             // Then create the table using the pre-calculated codes
-            let codeIndex = 0;
             for (let i = 0; i < warehouse.rows; i++) {
               const row = document.createElement("tr");
 
@@ -188,6 +205,19 @@
                   cell.textContent = code;
                 }
 
+                // Check if the cell has data in the database
+                if (palletData && palletData[cell.getAttribute("data-code")]) {
+                  const dbQuantity = palletData[cell.getAttribute("data-code")].quantity;
+                  cell.setAttribute("data-quantity", dbQuantity);
+
+                  // If quantity is already 100, mark as full
+                  if (dbQuantity >= 100) {
+                    cell.classList.add("full");
+                  } else {
+                    cell.classList.add("has-data");
+                  }
+                }
+
                 row.appendChild(cell);
               }
 
@@ -209,6 +239,36 @@
           // Add both containers to the draggable area
           draggableArea.appendChild(topContainer);
           draggableArea.appendChild(bottomContainer);
+        }
+
+        function updateCellColors() {
+          const cells = document.querySelectorAll(".warehouse-cell");
+          cells.forEach((cell) => {
+            const code = cell.getAttribute("data-code");
+            const dbQuantity = parseInt(
+              cell.getAttribute("data-quantity") || "0"
+            );
+
+            // Skip yellow cells
+            if (cell.style.backgroundColor === "yellow") {
+              return;
+            }
+
+            // Remove all status classes first
+            cell.classList.remove("danger", "has-data", "full");
+
+            // Apply appropriate class based on quantity
+            if (dbQuantity >= 100) {
+              // Already full
+              cell.classList.add("full");
+            } else if (dbQuantity + formQuantity > 100) {
+              // Would exceed max with new quantity
+              cell.classList.add("danger");
+            } else if (dbQuantity > 0) {
+              // Has some data but not full
+              cell.classList.add("has-data");
+            }
+          });
         }
 
         // Function to setup interaction events for both mouse and touch
@@ -361,29 +421,78 @@
         }
 
         function showPopup(code, x, y) {
-          // Generate pallet details (in a real app, this would come from a database)
-          const palletDetails = {
-            code: code,
-            product: "Product " + code.substring(1),
-            quantity: Math.floor(Math.random() * 100) + 1,
-            lastUpdated: new Date().toLocaleDateString(),
-            section:
-              code.substring(1, 2) === "1"
-                ? "QA"
-                : code.substring(1, 2) === "2"
-                ? "ENTRANCE"
-                : "FINISHING",
-          };
+          // Determine section based on pallet code
+          let section;
+          const codeNum = parseInt(code.substring(1));
 
-          // Populate popup content
+          if (codeNum >= 1296 && codeNum <= 1575) {
+            section = "QA";
+          } else if (codeNum >= 1576 && codeNum <= 2121) {
+            section = "FINISHING";
+          } else {
+            section = "ENTRANCE";
+          }
+
+          // Check if there's data in the database
+          const dbRecord = palletData ? palletData[code] : null;
+          let hasRecord = dbRecord ? "Yes" : "No";
+
+          // Get quantity from database or set to 0 if not found
+          const dbQuantity = dbRecord ? dbRecord.quantity : 0;
+
+          // Calculate total quantity
+          const totalQuantity = dbQuantity + formQuantity;
+
+          // Check status conditions
+          const isFull = dbQuantity >= 100;
+          const wouldExceed = totalQuantity > 100;
+
+          // Color coding for quantity status
+          let quantityStatus = "Normal";
+          let quantityColor = "black";
+
+          if (isFull) {
+            quantityStatus = "Already Full";
+            quantityColor = "red";
+          } else if (wouldExceed) {
+            quantityStatus = "Would Exceed Maximum";
+            quantityColor = "red";
+          } else if (totalQuantity >= 80) {
+            quantityStatus = "Near Full";
+            quantityColor = "orange";
+          }
+
+          // Get last updated date
+          const lastUpdated = dbRecord
+            ? dbRecord.date
+            : new Date().toLocaleDateString();
+
+          // Populate popup content with enhanced information
           popupContent.innerHTML = `
             <h3>Pallet Information</h3>
-            <p><strong>Pallet Code:</strong> ${palletDetails.code}</p>
-            <p><strong>Section:</strong> ${palletDetails.section}</p>
-            <p><strong>Product:</strong> ${palletDetails.product}</p>
-            <p><strong>Quantity:</strong> ${palletDetails.quantity} units</p>
-            <p><strong>Last Updated:</strong> ${palletDetails.lastUpdated}</p>
+            <p><strong>Pallet Code:</strong> ${code}</p>
+            <p><strong>Section:</strong> ${section}</p>
+            <p><strong>Current Quantity:</strong> ${dbQuantity} units</p>
+            <p><strong>Your Input Quantity:</strong> ${formQuantity} units</p>
+            <p><strong>Total After Addition:</strong> <span style="color: ${quantityColor}; font-weight: bold">${totalQuantity} units (${quantityStatus})</span></p>
+            <p><strong>Maximum Allowed:</strong> 100 units</p>
+            <p><strong>Last Updated:</strong> ${lastUpdated}</p>
+            <p><strong>Any record in database:</strong> ${hasRecord}</p>
           `;
+
+          // Enable or disable the select button based on quantity
+          const popupSelect = document.getElementById("popup-select");
+          if (isFull || wouldExceed) {
+            popupSelect.disabled = true;
+            popupSelect.classList.add("button-disabled");
+            popupSelect.title = isFull
+              ? "Cannot select - Pallet is already full"
+              : "Cannot select - Maximum quantity (100) would be exceeded";
+          } else {
+            popupSelect.disabled = false;
+            popupSelect.classList.remove("button-disabled");
+            popupSelect.title = "Select this pallet position";
+          }
 
           // Position and show popup
           const isMobile = window.innerWidth <= 768;
