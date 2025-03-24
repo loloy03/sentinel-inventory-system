@@ -4,7 +4,7 @@ import json
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
-from .models import ReceivedStock
+from .models import FromsStock
 
 # Define the scope and credentials for Google Sheets API
 SCOPE = [
@@ -39,7 +39,7 @@ def receive_form(request):
         formatted_date = datetime.strptime(date, "%Y-%m-%d").strftime("%m/%d/%Y")
 
         # Save to database
-        stock_entry = ReceivedStock.objects.create(
+        stock_entry = FromsStock.objects.create(
             production_code=production_code,
             date=date,
             product=product,
@@ -119,7 +119,7 @@ def release_form(request):
         formatted_date = datetime.strptime(date, "%Y-%m-%d").strftime("%m/%d/%Y")
 
         # Save to database with negative quantity to indicate release
-        stock_entry = ReceivedStock.objects.create(
+        stock_entry = FromsStock.objects.create(
             production_code=production_code,
             date=date,
             product=product,
@@ -244,7 +244,7 @@ def get_google_sheet(status):
 def warehouse_outside(request):
     """Render the warehouse layout page with database records"""
     # Get all received stock records
-    pallet_records = ReceivedStock.objects.all()
+    pallet_records = FromsStock.objects.all()
 
     # Convert to a format that can be used in JavaScript
     # Aggregate quantities for the same pallet position
@@ -282,7 +282,7 @@ def warehouse_outside(request):
 def warehouse_area(request):
     """Render the warehouse layout page with database records"""
     # Get all received stock records
-    pallet_records = ReceivedStock.objects.all()
+    pallet_records = FromsStock.objects.all()
 
     # Convert to a format that can be used in JavaScript
     # Aggregate quantities for the same pallet position
