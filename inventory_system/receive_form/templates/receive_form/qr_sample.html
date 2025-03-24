@@ -83,8 +83,8 @@
         <h2>QR Code Generator for Warehouse Items</h2>
         
         <div class="form-group">
-            <label for="production_id">Production Code* (Enter a number)</label>
-            <input type="text" id="production_id" placeholder="e.g., 001-3-24S04" required>
+            <label for="production_code">Production Code* (Enter a number)</label>
+            <input type="text" id="production_code" placeholder="e.g., 001-3-24S04" required>
         </div>
         
         <div class="form-group">
@@ -170,7 +170,7 @@
         }
         
         function generateQR() {
-            const production_id = document.getElementById('production_id').value;
+            const production_code = document.getElementById('production_code').value;
             const product = document.getElementById('product').value;
             const color = document.getElementById('color').value;
             const status = document.getElementById('status').value;
@@ -178,14 +178,14 @@
             const pallet_position = document.getElementById('pallet_position').value;
             const date = document.getElementById('date').value;
             
-            if (!production_id || !product || !color || !status || !quantity || !pallet_position || !date) {
+            if (!production_code || !product || !color || !status || !quantity || !pallet_position || !date) {
                 alert('Please fill all required fields');
                 return;
             }
             
             // Create data object
             const data = {
-                production_id: production_id,
+                production_code: production_code,
                 product: product,
                 color: color,
                 status: status,

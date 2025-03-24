@@ -17,7 +17,7 @@ CREDENTIALS_FILE = "credentials.json"
 def release_form(request):
     if request.method == "POST":
         # Get form data
-        production_id = request.POST.get("production_id")
+        production_code = request.POST.get("production_code")
         product = request.POST.get("product_released")
         color = request.POST.get("color")
         quantity = int(request.POST.get("quantity"))
@@ -30,14 +30,14 @@ def release_form(request):
         item_code = f"{product}{color}"
         
         # Create warehouse ID
-        warehouse_id = f"{production_id}{pallet_position}"
+        warehouse_id = f"{production_code}{pallet_position}"
 
         # Format the date as shown in the Google Sheet
         formatted_date = datetime.strptime(date, "%Y-%m-%d").strftime("%m/%d/%Y")
 
         # Save to database
         stock_entry = ReleasedStock.objects.create(
-            production_id=production_id,
+            production_code=production_code,
             date=date,
             product=product,
             color=color,
@@ -54,7 +54,7 @@ def release_form(request):
             # Append row to the spreadsheet - without item_code, status, and warehouse_id
             worksheet.append_row(
                 [
-                    production_id,
+                    production_code,
                     product,
                     color,
                     item_code,

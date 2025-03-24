@@ -20,13 +20,13 @@
       {% csrf_token %}
 
       <div class="form-group">
-        <label for="production_id" class="form-label"
+        <label for="production_code" class="form-label"
           >Production Code* (Enter a number)</label
         >
         <input
           type="text"
-          id="production_id"
-          name="production_id"
+          id="production_code"
+          name="production_code"
           placeholder="e.g., 001-3-24S04"
           class="form-control"
           required
@@ -135,7 +135,7 @@
     <div class="confirmation-details">
       <div class="detail-row">
         <div class="detail-label">Production ID:</div>
-        <div class="detail-value">{{ success_data.production_id }}</div>
+        <div class="detail-value">{{ success_data.production_code }}</div>
       </div>
       <div class="detail-row">
         <div class="detail-label">Product:</div>
@@ -323,8 +323,8 @@
         const data = JSON.parse(decodedText);
 
         // Fill the form with the scanned data
-        if (data.production_id)
-          document.getElementById("production_id").value = data.production_id;
+        if (data.production_code)
+          document.getElementById("production_code").value = data.production_code;
         if (data.product) {
           const productSelect = document.getElementById("product_received");
           for (let i = 0; i < productSelect.options.length; i++) {

@@ -21,7 +21,7 @@ def receive_form(request):
 
     if request.method == "POST":
         # Get form data
-        production_id = request.POST.get("production_id")
+        production_code = request.POST.get("production_code")
         product = request.POST.get("product_received")
         color = request.POST.get("color")
         quantity = int(request.POST.get("quantity"))
@@ -33,14 +33,14 @@ def receive_form(request):
         item_code = f"{product}{color}"
 
         # Create warehouse ID
-        warehouse_id = f"{production_id}{pallet_position}"
+        warehouse_id = f"{production_code}{pallet_position}"
 
         # Format the date as shown in the Google Sheet
         formatted_date = datetime.strptime(date, "%Y-%m-%d").strftime("%m/%d/%Y")
 
         # Save to database
         stock_entry = ReceivedStock.objects.create(
-            production_id=production_id,
+            production_code=production_code,
             date=date,
             product=product,
             color=color,
@@ -53,7 +53,7 @@ def receive_form(request):
 
         # Prepare row data for Google Sheets
         row_data = [
-            production_id,
+            production_code,
             product,
             color,
             item_code,
@@ -70,7 +70,7 @@ def receive_form(request):
         if success:
             # Store success data for the confirmation display
             success_data = {
-                "production_id": production_id,
+                "production_code": production_code,
                 "product": product,
                 "color": color,
                 "quantity": quantity,
@@ -175,7 +175,7 @@ def warehouse_outside(request):
         else:
             # Create new entry for this pallet position
             pallet_data[pallet_code] = {
-                "production_id": record.production_id,
+                "production_code": record.production_code,
                 "product": record.product,
                 "color": record.color,
                 "quantity": record.quantity,
@@ -213,7 +213,7 @@ def warehouse_area(request):
         else:
             # Create new entry for this pallet position
             pallet_data[pallet_code] = {
-                "production_id": record.production_id,
+                "production_code": record.production_code,
                 "product": record.product,
                 "color": record.color,
                 "quantity": record.quantity,
