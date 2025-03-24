@@ -468,6 +468,23 @@
 
     // Add event listener to the select button
     selectPalletButton.addEventListener("click", function () {
+      const quantityInput = document.getElementById("quantity");
+      const quantityValue = parseInt(quantityInput.value) || 0;
+
+      // Pass quantity value to the modal
+      const insideIframe = document.getElementById("warehouseInsideFrame");
+      const outsideIframe = document.getElementById("warehouseOutsideFrame");
+
+      // Send message to both iframes (only the visible one will process it)
+      insideIframe.contentWindow.postMessage(
+        { type: "setQuantity", quantity: quantityValue },
+        "*"
+      );
+      outsideIframe.contentWindow.postMessage(
+        { type: "setQuantity", quantity: quantityValue },
+        "*"
+      );
+
       modalContainer.style.display = "block";
     });
 

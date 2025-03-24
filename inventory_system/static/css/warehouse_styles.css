@@ -116,6 +116,36 @@ body {
   cursor: grabbing;
 }
 
+/* Update the cell styling to show dangerous levels */
+.warehouse-cell.danger {
+  background-color: #ffcccc;
+  border: 2px solid #ff4d4f;
+}
+.has-data {
+  background-color: #e6f7ff;
+  border: 2px solid #1890ff;
+}
+
+/* Add styles for the disabled button */
+.button-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #cccccc;
+}
+
+/* Update the cell styling to show dangerous levels */
+.warehouse-cell.danger {
+  background-color: #ffcccc;
+  border: 2px solid #ff4d4f;
+}
+
+/* Add style for cells that are already full */
+.warehouse-cell.full {
+  background-color: #ff4d4f;
+  border: 2px solid #cc0000;
+  color: white;
+}
+
 @media (max-width: 768px) {
   .warehouse-cell {
     padding: 8px;
