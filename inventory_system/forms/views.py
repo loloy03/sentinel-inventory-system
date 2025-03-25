@@ -118,20 +118,36 @@ def release_form(request):
         # Format the date as shown in the Google Sheet
         formatted_date = datetime.strptime(date, "%Y-%m-%d").strftime("%m/%d/%Y")
 
-        # Save to database with negative quantity to indicate release
-        stock_entry = FromsStock.objects.create(
-            production_code=production_code,
-            date=date,
-            product=product,
-            color=color,
-            item_code=item_code,
-            quantity=-quantity,  # negative quantity for release
-            pallet_position=pallet_position,
-            status=status,
-            warehouse_id=warehouse_id,
-        )
+        try:
+            # Find the exact record with the warehouse_id
+            stock_record = FromsStock.objects.get(
+                warehouse_id=warehouse_id, product=product, color=color
+            )
 
-        # Prepare row data for Google Sheets
+            # Check if there's enough quantity to release
+            if stock_record.quantity < quantity:
+                messages.error(
+                    request,
+                    f"Error: Insufficient stock. Available quantity is {stock_record.quantity}",
+                )
+                return render(
+                    request, "release_form/release_form.html", {"success_data": None}
+                )
+
+            # Decrease the quantity
+            stock_record.quantity -= quantity
+            stock_record.save()
+
+        except FromsStock.DoesNotExist:
+            # Handle case where no matching record exists
+            messages.error(
+                request, "Error: No matching stock record found for the given details"
+            )
+            return render(
+                request, "release_form/release_form.html", {"success_data": None}
+            )
+
+        # Prepare row data for Google Sheets (still track the release)
         row_data = [
             production_code,
             product,
@@ -153,7 +169,7 @@ def release_form(request):
                 "production_code": production_code,
                 "product": product,
                 "color": color,
-                "quantity": -quantity,  # Keep positive for display
+                "quantity": quantity,
                 "date": formatted_date,
                 "status": status,
                 "pallet_position": pallet_position,
@@ -315,37 +331,35 @@ def warehouse_area(request):
         "warehouse_layouts/warehouse_area.html",
         {"pallet_data_json": json.dumps(pallet_data)},
     )
-    
+
+
 def search_key(request):
     search_results = None
-    
-    if request.method == 'POST':
-        product = request.POST.get('search_product')
-        color = request.POST.get('search_color')
-        
+
+    if request.method == "POST":
+        product = request.POST.get("search_product")
+        color = request.POST.get("search_color")
+
         # Query the database for matching records
-        pallet_records = FromsStock.objects.filter(
-            product=product, 
-            color=color
-        )
-        
+        pallet_records = FromsStock.objects.filter(product=product, color=color)
+
         # Aggregate quantities for the same pallet position
         pallet_data = {}
         for record in pallet_records:
             pallet_code = record.pallet_position
-            
+
             if pallet_code in pallet_data:
                 # Add to existing quantity for this pallet position
                 pallet_data[pallet_code] += record.quantity
             else:
                 # Create new entry for this pallet position
                 pallet_data[pallet_code] = record.quantity
-        
+
         # Convert to list of tuples for easier rendering
-        search_results = [(pallet, qty) for pallet, qty in pallet_data.items() if qty > 0]
-    
+        search_results = [
+            (pallet, qty) for pallet, qty in pallet_data.items() if qty > 0
+        ]
+
     return render(
-        request, 
-        'search_key/search_key.html', 
-        {'search_results': search_results}
+        request, "search_key/search_key.html", {"search_results": search_results}
     )
