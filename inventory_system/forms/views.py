@@ -317,4 +317,35 @@ def warehouse_area(request):
     )
     
 def search_key(request):
-    return render(request, 'search_key/search_key.html')
+    search_results = None
+    
+    if request.method == 'POST':
+        product = request.POST.get('search_product')
+        color = request.POST.get('search_color')
+        
+        # Query the database for matching records
+        pallet_records = FromsStock.objects.filter(
+            product=product, 
+            color=color
+        )
+        
+        # Aggregate quantities for the same pallet position
+        pallet_data = {}
+        for record in pallet_records:
+            pallet_code = record.pallet_position
+            
+            if pallet_code in pallet_data:
+                # Add to existing quantity for this pallet position
+                pallet_data[pallet_code] += record.quantity
+            else:
+                # Create new entry for this pallet position
+                pallet_data[pallet_code] = record.quantity
+        
+        # Convert to list of tuples for easier rendering
+        search_results = [(pallet, qty) for pallet, qty in pallet_data.items() if qty > 0]
+    
+    return render(
+        request, 
+        'search_key/search_key.html', 
+        {'search_results': search_results}
+    )

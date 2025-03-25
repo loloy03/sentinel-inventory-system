@@ -1,9 +1,37 @@
-{% extends "base.html" %}
-{% block content %}
-{% load static %}
+{% extends "base.html" %} {% block content %} {% load static %}
 <head>
   <link rel="stylesheet" href="{% static 'css/forms_styles.css' %}" />
 </head>
+<style>
+  .search-results {
+    margin-top: 10px;
+    text-align: center;
+  }
+
+  .results-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+
+  .results-table th,
+  .results-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+  }
+
+  .results-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+  }
+
+  .no-stock {
+    color: red;
+    font-weight: bold;
+    margin-top: 20px;
+  }
+</style>
 
 <div class="container">
   <div class="form-container">
@@ -14,10 +42,10 @@
 
       <div class="form-group">
         <label for="search_product" class="form-label">Search Product*</label>
-        <select 
-          id="search_product" 
-          name="search_product" 
-          class="form-select" 
+        <select
+          id="search_product"
+          name="search_product"
+          class="form-select"
           required
         >
           <option value="" selected disabled>Choose a Product</option>
@@ -29,10 +57,10 @@
 
       <div class="form-group">
         <label for="search_color" class="form-label">Search Color*</label>
-        <select 
-          id="search_color" 
-          name="search_color" 
-          class="form-select" 
+        <select
+          id="search_color"
+          name="search_color"
+          class="form-select"
           required
         >
           <option value="" selected disabled>Choose a Color</option>
@@ -46,6 +74,34 @@
         <button type="submit" class="submit-btn">Search</button>
       </div>
     </form>
+
+    {% if search_results is not None %}
+    <div class="search-results">
+      <h3>Search Results</h3>
+      {% if search_results %}
+      <table class="results-table">
+        <thead>
+          <tr>
+            <th>Pallet Number</th>
+            <th>Quantity</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pallet, quantity in search_results %}
+          <tr>
+            <td>{{ pallet }}</td>
+            <td>{{ quantity }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="no-stock">
+        No stock available for the selected product and color.
+      </p>
+      {% endif %}
+    </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
