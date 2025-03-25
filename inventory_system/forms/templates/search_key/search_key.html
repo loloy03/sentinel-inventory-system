@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+{% load static %}
+<head>
+  <link rel="stylesheet" href="{% static 'css/forms_styles.css' %}" />
+</head>
+
+<div class="container">
+  <div class="form-container">
+    <h2 class="form-title">SEARCH PRODUCT INFORMATION</h2>
+
+    <form method="post" action="" id="searchForm">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label for="search_product" class="form-label">Search Product*</label>
+        <select 
+          id="search_product" 
+          name="search_product" 
+          class="form-select" 
+          required
+        >
+          <option value="" selected disabled>Choose a Product</option>
+          <option value="Trolley">Trolley</option>
+          <option value="Armchair">Armchair</option>
+          <option value="Pallets">Pallets</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="search_color" class="form-label">Search Color*</label>
+        <select 
+          id="search_color" 
+          name="search_color" 
+          class="form-select" 
+          required
+        >
+          <option value="" selected disabled>Choose a Color</option>
+          <option value="green">Green</option>
+          <option value="black">Black</option>
+          <option value="orange">Orange</option>
+        </select>
+      </div>
+
+      <div class="text-right">
+        <button type="submit" class="submit-btn">Search</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

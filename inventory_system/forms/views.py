@@ -315,3 +315,6 @@ def warehouse_area(request):
         "warehouse_layouts/warehouse_area.html",
         {"pallet_data_json": json.dumps(pallet_data)},
     )
+    
+def search_key(request):
+    return render(request, 'search_key/search_key.html')
