@@ -40,5 +40,5 @@ urlpatterns = [
             "forms.urls",
         ),
     ),
-    path("warehouse_layout/", include("warehouse_layout.urls")),
+    path("search_key/", include("forms.urls")),
 ]
