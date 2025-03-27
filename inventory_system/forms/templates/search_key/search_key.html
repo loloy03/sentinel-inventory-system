@@ -104,4 +104,51 @@
     {% endif %}
   </div>
 </div>
+<div class="right-sidebar">
+  <h2 class="text-center mb-4">Warehouse Layouts</h2>
+
+  <div class="warehouse-tabs">
+    <div class="warehouse-tab active" id="tab-inside">Warehouse Area</div>
+    <div class="warehouse-tab" id="tab-outside">Warehouse Outside</div>
+  </div>
+
+  <div class="iframe-container">
+    <iframe
+      id="warehouseInsideFrame"
+      class="modal-iframe"
+      src="{% url 'forms:warehouse_area' %}"
+      style="display: block"
+    ></iframe>
+    <iframe
+      id="warehouseOutsideFrame"
+      class="modal-iframe"
+      style="display: none"
+      src="{% url 'forms:warehouse_outside' %}"
+    ></iframe>
+  </div>
+</div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const insideTab = document.getElementById("tab-inside");
+  const outsideTab = document.getElementById("tab-outside");
+  const insideIframe = document.getElementById("warehouseInsideFrame");
+  const outsideIframe = document.getElementById("warehouseOutsideFrame");
+
+  insideTab.addEventListener("click", function () {
+    insideTab.classList.add("active");
+    outsideTab.classList.remove("active");
+    insideIframe.style.display = "block";
+    outsideIframe.style.display = "none";
+  });
+
+  outsideTab.addEventListener("click", function () {
+    outsideTab.classList.add("active");
+    insideTab.classList.remove("active");
+    outsideIframe.style.display = "block";
+    insideIframe.style.display = "none";
+  });
+});
+</script>
 {% endblock %}
