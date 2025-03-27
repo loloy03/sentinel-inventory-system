@@ -2,61 +2,265 @@
 
 <!DOCTYPE html>
 <html lang="en">
+   
   <head>
+       
     <meta charset="UTF-8" />
+       
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Warehouse Inside</title>
+       
+    <title>Warehouse Area</title>
+       
     <link rel="stylesheet" href="{% static 'css/warehouse_styles.css' %}" />
+
+    <style>
+      body {
+        margin: 0;
+        font-family: sans-serif;
+        overflow: hidden; /* Prevent body scrolling */
+        display: flex; /* Use flexbox for overall layout */
+        flex-direction: column;
+        height: 100vh;
+      }
+      .top-message {
+        /* Optional: If you need space for other messages */
+        padding: 5px 10px;
+        background-color: #f1f1f1;
+        font-size: 0.9em;
+        text-align: center;
+      }
+      .container {
+        flex-grow: 1; /* Allow container to fill remaining space */
+        overflow: hidden; /* Crucial for containing the draggable area */
+        border: 1px solid #ccc;
+        position: relative; /* Needed for absolute positioning of children */
+        cursor: grab;
+        /* background-color: #eef; */ /* REMOVED this line */
+      }
+      .draggable-area {
+        display: inline-block; /* Allows centering and proper dimension calculation */
+        transform-origin: 0 0; /* Zoom from top-left */
+        white-space: nowrap; /* Prevent tables/sections from wrapping */
+        cursor: default; /* Default cursor for content, container has grab */
+      }
+      .warehouse-layout {
+        display: flex; /* Use flexbox to arrange sections side-by-side */
+        gap: 20px; /* Add some space between sections */
+        padding: 20px; /* Add padding around the whole layout */
+        background-color: #fff; /* White background for layout area */
+      }
+      .warehouse-section {
+        display: inline-block;
+        vertical-align: top;
+        border: 1px solid #eee;
+      }
+      .warehouse-table {
+        border-collapse: collapse;
+        margin: 0; /* Remove default table margin */
+      }
+      .warehouse-cell {
+        border: 1px solid #ddd;
+        padding: 5px;
+        min-width: 60px;
+        height: 40px; /* Give cells a fixed height */
+        text-align: center;
+        font-size: 10px;
+        cursor: pointer;
+        background-color: #f9f9f9; /* Default empty */
+        vertical-align: middle; /* Center content vertically */
+        position: relative; /* For potential future content positioning */
+        box-sizing: border-box; /* Include padding/border in width/height */
+      }
+      .warehouse-cell:hover {
+        background-color: #e9e9e9;
+      }
+      .warehouse-cell.has-data {
+        background-color: #cce5ff;
+      } /* Light Blue */
+      .warehouse-cell.full {
+        background-color: #dc3545;
+        color: white;
+        font-weight: bold;
+      } /* Red */
+      .warehouse-cell.danger {
+        background-color: #ffc107;
+      } /* Orange/Yellow */
+      .warehouse-cell.insufficient {
+        background-color: #f8d7da;
+        color: #721c24;
+      } /* Light Red */
+
+      .warehouse-header,
+      .warehouse-subheader {
+        background-color: #307634;
+        font-weight: bold;
+        text-align: center;
+        padding: 8px;
+        font-size: 12px;
+        color: white;
+      }
+
+      /* --- Sticky Controls --- */
+      .sticky-controls {
+        position: absolute;
+        bottom: 15px;
+        right: 15px;
+        z-index: 10;
+        display: flex;
+        gap: 8px;
+        background-color: rgba(
+          248,
+          249,
+          250,
+          0.85
+        ); /* Light background with transparency */
+        padding: 8px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      }
+      .sticky-controls button {
+        padding: 6px 12px;
+        font-size: 12px;
+        cursor: pointer;
+        border: 1px solid #ccc;
+        background-color: #fff;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+      }
+      .sticky-controls button:hover {
+        background-color: #e9ecef;
+      }
+      .sticky-controls button:active {
+        background-color: #d3d9df;
+      }
+      /* --- End Sticky Controls --- */
+
+      /* --- Popup Styles --- */
+      .popup {
+        display: none;
+        position: fixed; /* Use fixed positioning */
+        background-color: white;
+        border: 1px solid #ccc;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        padding: 15px 20px;
+        z-index: 1000;
+        max-width: 320px;
+        border-radius: 6px;
+        font-size: 0.9em;
+      }
+      .popup h3 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        font-size: 1.1em;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 8px;
+      }
+      .popup-content hr {
+        border: none;
+        border-top: 1px solid #eee;
+        margin: 10px 0;
+      }
+      .popup-content p {
+        margin: 8px 0;
+      }
+      .popup-buttons {
+        margin-top: 15px;
+        text-align: right;
+        display: flex;
+        justify-content: flex-end; /* Pushes buttons to the right */
+        gap: 10px;
+      }
+      .popup-buttons button {
+        padding: 8px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .popup-close {
+        background-color: #6c757d;
+        color: white;
+        border: none;
+      }
+      .popup-close:hover {
+        background-color: #5a6268;
+      }
+      .popup-select {
+        background-color: #007bff;
+        color: white;
+        border: none;
+      }
+      .popup-select:hover:not(:disabled) {
+        background-color: #0056b3;
+      }
+      .button-disabled,
+      .popup-select:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+        opacity: 0.7;
+      }
+      /* --- End Popup Styles --- */
+    </style>
+     
   </head>
+   
   <body>
-    <div class="controls">
-      <button id="zoom-in">Zoom In (+)</button>
-      <button id="zoom-out">Zoom Out (-)</button>
-      <button id="reset">Reset View</button>
-      <span>Drag to move around, click on a cell to see details</span>
+    <div class="top-message">
+      <span
+        >Drag map to move, Scroll/Pinch to zoom, Click/Tap a cell for
+        details.</span
+      >
     </div>
 
+       
     <div class="container">
-      <div class="draggable-area" id="draggable">
-        <!-- Warehouse sections will be dynamically generated here -->
+           
+      <div class="draggable-area" id="draggable">             </div>
+
+      <div class="sticky-controls">
+        <button id="zoom-in" title="Zoom In">+</button>
+        <button id="zoom-out" title="Zoom Out">-</button>
+        <button id="reset" title="Reset View">Reset</button>
       </div>
+         
     </div>
 
+       
     <div class="popup" id="popup">
+           
       <div class="popup-content" id="popup-content"></div>
+           
       <div class="popup-buttons">
-        <button class="popup-close" id="popup-close">Close</button>
-        <button class="popup-select" id="popup-select">
-          Select This Pallet
-        </button>
+                <button class="popup-close" id="popup-close">Close</button>    
+           
+        <button class="popup-select" id="popup-select">Select Pallet</button>  
+           
       </div>
+         
     </div>
 
+       
     <script>
-      let formQuantity = 0;
-      let operationType = "add";
-      const MAX_QUANTITY = 100;
+      let formQuantity = 0; // Quantity from parent form
+      let operationType = "add"; // 'add' or 'subtract'
+      const MAX_QUANTITY = 100; // Max capacity of a pallet // Listen for messages from parent window (e.g., containing form)
 
       window.addEventListener("message", function (event) {
         if (event.data && event.data.type === "setQuantity") {
-          formQuantity = event.data.quantity;
-          operationType = event.data.operation || "add"; // Set operation type from message
+          formQuantity = parseInt(event.data.quantity || "0", 10); // Ensure it's a number
+          operationType = event.data.operation || "add";
           console.log(
             "Received quantity:",
             formQuantity,
             "Operation:",
             operationType
-          );
-          // Update all cell colors when quantity changes
+          ); // Update cell colors based on the new quantity/operation
           updateCellColors();
         }
-      });
+      }); // Receive initial pallet data from Django view
 
-      // Receive data from Django view
       const palletData = JSON.parse("{{ pallet_data_json|escapejs }}");
 
       document.addEventListener("DOMContentLoaded", function () {
-        // Warehouse configuration data
+        // --- Warehouse Configuration ---
         const warehouseData = [
           {
             name: "WAREHOUSE: INSIDE",
@@ -87,10 +291,7 @@
             prefix: "P",
             codeByColumn: true,
           },
-        ];
-
-        // Generate warehouse layout
-        generateWarehouseLayout();
+        ]; // --- DOM Element References ---
 
         const draggableArea = document.getElementById("draggable");
         const container = document.querySelector(".container");
@@ -100,84 +301,102 @@
         const popupSelect = document.getElementById("popup-select");
         const zoomInBtn = document.getElementById("zoom-in");
         const zoomOutBtn = document.getElementById("zoom-out");
-        const resetBtn = document.getElementById("reset");
+        const resetBtn = document.getElementById("reset"); // --- State Variables ---
 
         let isDragging = false;
-        let currentX = 0;
-        let currentY = 0;
-        let initialX = 0;
-        let initialY = 0;
-        let xOffset = 0;
-        let yOffset = 0;
-        let scale = 1;
-        let currentPalletCode = null;
+        let currentX = 0; // Translation X
+        let currentY = 0; // Translation Y
+        let initialX = 0; // Starting point for drag calculation
+        let initialY = 0; // Starting point for drag calculation
+        let xOffset = 0; // Current translation offset X
+        let yOffset = 0; // Current translation offset Y
+        let scale = 1; // Current scale factor
+        let currentPalletCode = null; // Code of the currently selected pallet
+        // Touch handling variables
         let touchStartTime = 0;
         let touchMoved = false;
-        let lastTap = 0; // For detecting double taps
-        const TOUCH_DURATION = 500; // Max duration for a tap in ms
-        const TOUCH_MOVEMENT_THRESHOLD = 10; // Max movement in px for a tap
+        let initialDistance = 0; // For pinch-zoom
+        let isPinching = false;
+        const TOUCH_DURATION = 300; // Max ms for a tap
+        const TOUCH_MOVEMENT_THRESHOLD = 10; // Max px movement for a tap
 
-        // Initialize position
-        setTransform();
+        // --- Initialization ---
+        generateWarehouseLayout(); // Create the HTML for the warehouse
+        setupInteractionEvents(); // Add mouse, touch, wheel listeners
+        resetView(); // Set initial scale and position to fit layout
+        updateCellColors(); // Apply initial colors based on data and formQuantity
 
-        // Setup interaction events
-        setupInteractionEvents();
-
-        // Zoom controls
+        // --- Event Listeners Setup ---
         zoomInBtn.addEventListener("click", zoomIn);
         zoomOutBtn.addEventListener("click", zoomOut);
         resetBtn.addEventListener("click", resetView);
 
-        // Close popup
-        popupClose.addEventListener("click", function () {
-          popup.style.display = "none";
-        });
+        popupClose.addEventListener(
+          "click",
+          () => (popup.style.display = "none")
+        );
 
-        // Select pallet
         popupSelect.addEventListener("click", function () {
           if (currentPalletCode && window.parent !== window) {
+            // Send message to the parent window containing the form
             window.parent.postMessage(
-              {
-                type: "palletSelected",
-                palletCode: currentPalletCode,
-              },
-              "*"
+              { type: "palletSelected", palletCode: currentPalletCode },
+              "*" // Use specific origin in production
             );
-            popup.style.display = "none";
+            popup.style.display = "none"; // Close popup after selection
+          } else {
+            console.warn(
+              "Cannot send message: No pallet selected or not in iframe."
+            );
           }
         });
 
-        // Function to generate warehouse layout
-        function generateWarehouseLayout() {
-          const draggableArea = document.getElementById("draggable");
+        // --- Core Functions ---
 
-          // Create a wrapper div for warehouse layout
+        /**
+         * Generates the HTML table structure for the warehouse layout based on warehouseData.
+         */
+        function generateWarehouseLayout() {
+          draggableArea.innerHTML = ""; // Clear previous layout if any
           const warehouseLayoutContainer = document.createElement("div");
           warehouseLayoutContainer.className = "warehouse-layout";
 
-          // Loop through each warehouse in the configuration
-          warehouseData.forEach((warehouse, warehouseIndex) => {
-            const warehouseSection = document.createElement("div");
-            warehouseSection.className = "warehouse-section";
-
+          warehouseData.forEach((warehouse) => {
+            const warehouseSectionDiv = document.createElement("div");
+            warehouseSectionDiv.className = "warehouse-section";
             const table = document.createElement("table");
             table.className = "warehouse-table";
 
-            // Create main header for warehouse
-            const headerRow = document.createElement("tr");
-            const headerCell = document.createElement("th");
-            headerCell.className = "warehouse-header";
+            // Function to create and append a cell
+            const createCell = (code) => {
+              const cell = document.createElement("td");
+              cell.className = "warehouse-cell";
+              cell.setAttribute("data-code", code);
+              cell.textContent = code; // Display the code in the cell
+              const data = palletData[code];
+              if (data) {
+                cell.setAttribute("data-quantity", data.quantity);
+                cell.setAttribute("data-date", data.date); // Store date if available
+              } else {
+                cell.setAttribute("data-quantity", "0"); // Explicitly set 0 if no data
+              }
+              return cell;
+            };
+
+            // Add overall warehouse header
+            const mainHeaderRow = document.createElement("tr");
+            const mainHeaderCell = document.createElement("th");
+            mainHeaderCell.className = "warehouse-header";
+            mainHeaderCell.textContent = warehouse.name;
+            mainHeaderRow.appendChild(mainHeaderCell);
+            table.appendChild(mainHeaderRow);
 
             if (warehouse.sections) {
-              // For warehouses with multiple sections
-              headerCell.colSpan = warehouse.sections[0].cols;
-              headerCell.textContent = warehouse.name;
-              headerRow.appendChild(headerCell);
-              table.appendChild(headerRow);
+              // Assume all sections have the same number of columns for the main header colspan
+              mainHeaderCell.colSpan = warehouse.sections[0]?.cols || 1;
 
-              // Process each section
               warehouse.sections.forEach((section) => {
-                // Create section header
+                // Add section sub-header
                 const sectionHeaderRow = document.createElement("tr");
                 const sectionHeaderCell = document.createElement("th");
                 sectionHeaderCell.className = "warehouse-subheader";
@@ -186,283 +405,313 @@
                 sectionHeaderRow.appendChild(sectionHeaderCell);
                 table.appendChild(sectionHeaderRow);
 
-                // Calculate all codes for this section
                 let codeCounter = section.startCode;
-                const cellCodes = [];
+                const cellCodes = Array.from(
+                  { length: section.rows * section.cols },
+                  (_, i) => {
+                    const currentCode =
+                      section.prefix + String(codeCounter + i).padStart(4, "0");
+                    return currentCode;
+                  }
+                );
+                // Adjust counter for next section if needed (depends if codes are continuous)
+                // codeCounter += section.rows * section.cols;
 
                 if (section.codeByColumn) {
-                  // Calculate codes by column
-                  for (let j = 0; j < section.cols; j++) {
-                    for (let i = 0; i < section.rows; i++) {
-                      cellCodes.push(
-                        section.prefix + String(codeCounter).padStart(4, "0")
-                      );
-                      codeCounter++;
-                    }
-                  }
-
-                  // Create rows and cells
                   for (let i = 0; i < section.rows; i++) {
                     const row = document.createElement("tr");
-
                     for (let j = 0; j < section.cols; j++) {
-                      const cell = document.createElement("td");
-                      cell.className = "warehouse-cell";
-
-                      const code = cellCodes[j * section.rows + i];
-                      cell.setAttribute("data-code", code);
-                      cell.textContent = code;
-
-                      // Check if the cell has data in the database
-                      if (palletData[code]) {
-                        const dbQuantity = palletData[code].quantity;
-                        cell.setAttribute("data-quantity", dbQuantity);
-
-                        // If quantity is already 100, mark as full
-                        if (dbQuantity >= 100) {
-                          cell.classList.add("full");
-                        } else {
-                          cell.classList.add("has-data");
-                        }
-                      }
-
-                      row.appendChild(cell);
+                      // Calculate index based on column-first generation
+                      const index = j * section.rows + i;
+                      const code =
+                        section.prefix +
+                        String(section.startCode + index).padStart(4, "0");
+                      row.appendChild(createCell(code));
                     }
-
                     table.appendChild(row);
                   }
                 } else {
-                  // Calculate codes by row
-                  for (let i = 0; i < section.rows; i++) {
-                    for (let j = 0; j < section.cols; j++) {
-                      cellCodes.push(
-                        section.prefix + String(codeCounter).padStart(4, "0")
-                      );
-                      codeCounter++;
-                    }
-                  }
-
-                  // Create rows and cells
-                  let codeIndex = 0;
+                  // codeByRow
                   for (let i = 0; i < section.rows; i++) {
                     const row = document.createElement("tr");
-
                     for (let j = 0; j < section.cols; j++) {
-                      const cell = document.createElement("td");
-                      cell.className = "warehouse-cell";
-
-                      const code = cellCodes[i * section.cols + j];
-                      cell.setAttribute("data-code", code);
-                      cell.textContent = code;
-
-                      // Check if the cell has data in the database
-                      if (palletData[code]) {
-                        cell.classList.add("has-data");
-                      }
-
-                      row.appendChild(cell);
+                      // Calculate index based on row-first generation
+                      const index = i * section.cols + j;
+                      const code =
+                        section.prefix +
+                        String(section.startCode + index).padStart(4, "0");
+                      row.appendChild(createCell(code));
                     }
-
                     table.appendChild(row);
                   }
                 }
               });
             } else {
-              // For warehouses without sections
-              headerCell.colSpan = warehouse.cols;
-              headerCell.textContent = warehouse.name;
-              headerRow.appendChild(headerCell);
-              table.appendChild(headerRow);
+              // Warehouse without sections (like OUTSIDE example)
+              mainHeaderCell.colSpan = warehouse.cols;
+              const codeByColumn =
+                warehouse.codeByColumn !== undefined
+                  ? warehouse.codeByColumn
+                  : true; // Default to column
 
-              // Calculate all codes
-              let codeCounter = warehouse.startCode;
-              const cellCodes = [];
-
-              // Calculate codes by row
-              for (let j = 0; j < warehouse.cols; j++) {
+              if (codeByColumn) {
                 for (let i = 0; i < warehouse.rows; i++) {
-                  cellCodes.push(
-                    warehouse.prefix + String(codeCounter).padStart(4, "0")
-                  );
-                  codeCounter++;
-                }
-              }
-
-              // Create rows and cells
-              for (let i = 0; i < warehouse.rows; i++) {
-                const row = document.createElement("tr");
-
-                for (let j = 0; j < warehouse.cols; j++) {
-                  const cell = document.createElement("td");
-                  cell.className = "warehouse-cell";
-
-                  const code = cellCodes[j * warehouse.rows + i];
-                  cell.setAttribute("data-code", code);
-                  cell.textContent = code;
-
-                  // Check if the cell has data in the database
-                  if (palletData[code]) {
-                    cell.classList.add("has-data");
+                  const row = document.createElement("tr");
+                  for (let j = 0; j < warehouse.cols; j++) {
+                    const index = j * warehouse.rows + i;
+                    const code =
+                      warehouse.prefix +
+                      String(warehouse.startCode + index).padStart(4, "0");
+                    row.appendChild(createCell(code));
                   }
-
-                  row.appendChild(cell);
+                  table.appendChild(row);
                 }
-
-                table.appendChild(row);
+              } else {
+                // codeByRow
+                for (let i = 0; i < warehouse.rows; i++) {
+                  const row = document.createElement("tr");
+                  for (let j = 0; j < warehouse.cols; j++) {
+                    const index = i * warehouse.cols + j;
+                    const code =
+                      warehouse.prefix +
+                      String(warehouse.startCode + index).padStart(4, "0");
+                    row.appendChild(createCell(code));
+                  }
+                  table.appendChild(row);
+                }
               }
             }
 
-            warehouseSection.appendChild(table);
-            warehouseLayoutContainer.appendChild(warehouseSection);
+            warehouseSectionDiv.appendChild(table);
+            warehouseLayoutContainer.appendChild(warehouseSectionDiv);
           });
 
           draggableArea.appendChild(warehouseLayoutContainer);
         }
+
+        /**
+         * Updates the background color and classes of cells based on their quantity
+         * and the current operation type and quantity from the form.
+         */
         function updateCellColors() {
           const cells = document.querySelectorAll(".warehouse-cell");
           cells.forEach((cell) => {
-            const code = cell.getAttribute("data-code");
+            // const code = cell.getAttribute("data-code");
             const dbQuantity = parseInt(
-              cell.getAttribute("data-quantity") || "0"
-            );
+              cell.getAttribute("data-quantity") || "0",
+              10
+            ); // Reset classes
 
-            // Remove all status classes first
             cell.classList.remove("danger", "has-data", "full", "insufficient");
 
             if (operationType === "add") {
-              // Addition logic (existing logic)
-              if (dbQuantity >= 100) {
-                // Already full
+              if (dbQuantity >= MAX_QUANTITY) {
                 cell.classList.add("full");
-              } else if (dbQuantity + formQuantity > 100) {
-                // Would exceed max with new quantity
-                cell.classList.add("danger");
+              } else if (dbQuantity + formQuantity > MAX_QUANTITY) {
+                cell.classList.add("danger"); // Will exceed if selected
+                if (dbQuantity > 0) cell.classList.add("has-data"); // Still show existing data color partially
               } else if (dbQuantity > 0) {
-                // Has some data but not full
-                cell.classList.add("has-data");
+                cell.classList.add("has-data"); // Has data, acceptable to add more
               }
+              // If dbQuantity is 0 and doesn't become danger, it remains default grey
             } else if (operationType === "subtract") {
-              // Subtraction logic
-              if (dbQuantity < formQuantity) {
-                // Not enough quantity to deduct
+              if (dbQuantity === 0) {
+                // Nothing to subtract, mark as insufficient? Or just leave grey? Let's use insufficient.
                 cell.classList.add("insufficient");
-              } else if (dbQuantity > 0) {
-                // Has enough quantity
-                cell.classList.add("has-data");
+              } else if (dbQuantity < formQuantity) {
+                cell.classList.add("insufficient"); // Not enough stock
+                cell.classList.add("has-data"); // Still show it has *some* data
+              } else if (dbQuantity >= formQuantity) {
+                cell.classList.add("has-data"); // Has enough stock
               }
             }
           });
         }
 
-        // Function to setup interaction events for both mouse and touch
+        /**
+         * Sets up event listeners for mouse, touch, and wheel interactions.
+         */
         function setupInteractionEvents() {
-          // Mouse events for dragging
+          // Mouse Dragging
           container.addEventListener("mousedown", dragStart);
-          document.addEventListener("mouseup", dragEnd);
-          document.addEventListener("mousemove", drag);
+          document.addEventListener("mouseup", dragEnd); // Use document to catch mouseup outside container
+          document.addEventListener("mousemove", drag); // Use document for smooth dragging // Touch Interaction (Pan, Pinch-Zoom, Tap)
 
-          // Touch events for dragging and tapping
-          container.addEventListener("touchstart", handleTouchStart);
-          document.addEventListener("touchend", handleTouchEnd);
-          document.addEventListener("touchmove", handleTouchMove);
+          container.addEventListener("touchstart", handleTouchStart, {
+            passive: false,
+          });
+          document.addEventListener("touchend", handleTouchEnd); // Use document to catch touchend outside
+          document.addEventListener("touchmove", handleTouchMove, {
+            passive: false,
+          }); // Use document // Wheel Zooming
 
-          // Wheel event for zooming
-          container.addEventListener("wheel", function (e) {
-            e.preventDefault();
-            const delta = e.deltaY > 0 ? -0.1 : 0.1;
-            updateScale(delta);
+          container.addEventListener("wheel", handleWheelZoom, {
+            passive: false,
           });
 
-          // Click event for warehouse cells (for mouse devices)
-          const cells = document.querySelectorAll(".warehouse-cell");
-          cells.forEach((cell) => {
-            cell.addEventListener("click", function (e) {
-              e.stopPropagation();
-              const code = this.getAttribute("data-code");
+          // Click event delegation (for mouse clicks that aren't drags)
+          draggableArea.addEventListener("click", handleMapClick);
+        }
+
+        // --- Event Handlers ---
+
+        function handleMapClick(e) {
+          // Only trigger if the direct target is a cell and it wasn't part of a drag
+          if (e.target.classList.contains("warehouse-cell")) {
+            // Check mouse movement; simple check, drag flag is more reliable
+            const dx = e.clientX - (initialX + xOffset); // Compare with where drag *started*
+            const dy = e.clientY - (initialY + yOffset);
+            // Allow click only if drag flag isn't set (dragEnd clears it) and movement minimal
+            if (
+              !isDragging &&
+              Math.sqrt(dx * dx + dy * dy) < TOUCH_MOVEMENT_THRESHOLD
+            ) {
+              const code = e.target.getAttribute("data-code");
               currentPalletCode = code;
               showPopup(code, e.clientX, e.clientY);
-            });
-          });
+            }
+          }
+        }
+
+        function handleWheelZoom(e) {
+          e.preventDefault();
+          const delta = e.deltaY > 0 ? -0.15 : 0.15; // Adjust sensitivity
+          const rect = container.getBoundingClientRect();
+          // Zoom relative to mouse pointer position within the container
+          const mouseX = e.clientX - rect.left;
+          const mouseY = e.clientY - rect.top;
+          updateScale(delta, mouseX, mouseY);
         }
 
         function handleTouchStart(e) {
-          touchStartTime = Date.now();
           touchMoved = false;
+          isDragging = false; // Reset drag flag
+          isPinching = false;
+          touchStartTime = Date.now();
 
-          const touch = e.touches[0];
-          initialX = touch.clientX - xOffset;
-          initialY = touch.clientY - yOffset;
-
-          // Start dragging but don't prevent default entirely
-          isDragging = true;
+          if (e.touches.length === 1) {
+            isDragging = true; // Prepare for potential drag
+            const touch = e.touches[0];
+            initialX = touch.clientX - xOffset;
+            initialY = touch.clientY - yOffset;
+          } else if (e.touches.length === 2) {
+            isDragging = false; // Prevent dragging during pinch
+            isPinching = true;
+            initialDistance = getTouchDistance(e.touches);
+            // Calculate pinch center relative to container
+            const rect = container.getBoundingClientRect();
+            const touch1 = e.touches[0];
+            const touch2 = e.touches[1];
+            initialX = (touch1.clientX + touch2.clientX) / 2 - rect.left; // Pinch center X
+            initialY = (touch1.clientY + touch2.clientY) / 2 - rect.top; // Pinch center Y
+            e.preventDefault(); // Prevent default pinch zoom actions
+          }
         }
 
         function handleTouchMove(e) {
-          if (!isDragging) {
-            return;
-          }
+          if (isDragging && e.touches.length === 1) {
+            const touch = e.touches[0];
+            const currentTouchX = touch.clientX;
+            const currentTouchY = touch.clientY;
 
-          const touch = e.touches[0];
-          const moveX = touch.clientX - initialX;
-          const moveY = touch.clientY - initialY;
+            // Calculate movement distance from the initial touch point
+            const moveX = currentTouchX - (initialX + xOffset);
+            const moveY = currentTouchY - (initialY + yOffset);
+            const moveDistance = Math.sqrt(moveX * moveX + moveY * moveY);
 
-          // Check if movement is significant
-          const moveDistance = Math.sqrt(
-            Math.pow(moveX - currentX, 2) + Math.pow(moveY - currentY, 2)
-          );
+            if (!touchMoved && moveDistance > TOUCH_MOVEMENT_THRESHOLD) {
+              touchMoved = true; // Confirm it's a drag, not a tap
+            }
 
-          if (moveDistance > TOUCH_MOVEMENT_THRESHOLD) {
-            touchMoved = true;
-
-            // This is definitely a drag, so we can prevent default
+            if (touchMoved) {
+              e.preventDefault(); // Prevent scrolling only when dragging
+              currentX = currentTouchX - initialX;
+              currentY = currentTouchY - initialY;
+              xOffset = currentX;
+              yOffset = currentY;
+              setTransform();
+            }
+          } else if (isPinching && e.touches.length === 2) {
             e.preventDefault();
+            touchMoved = true; // Pinching counts as movement
+            const currentDistance = getTouchDistance(e.touches);
+            const scaleFactor = currentDistance / initialDistance;
 
-            currentX = moveX;
-            currentY = moveY;
-            xOffset = currentX;
-            yOffset = currentY;
+            // Calculate scale change (delta)
+            const delta = (scaleFactor - 1) * scale; // Adjust delta based on current scale? Might need tuning. Use simpler relative change:
+            // let delta = (scaleFactor > 1) ? 0.1 : -0.1; // Simpler delta
 
-            setTransform();
+            // Apply scale update relative to the pinch center (initialX, initialY)
+            updateScale(scaleFactor * scale - scale, initialX, initialY);
+
+            // Update initial distance for continuous pinching
+            initialDistance = currentDistance;
           }
         }
 
         function handleTouchEnd(e) {
           const touchDuration = Date.now() - touchStartTime;
 
-          // End drag operation
-          isDragging = false;
-
-          // Only trigger tap if it was a short touch without much movement
-          if (!touchMoved && touchDuration < TOUCH_DURATION) {
-            // Find the element that was tapped
+          if (
+            !isPinching &&
+            !touchMoved &&
+            touchDuration < TOUCH_DURATION &&
+            e.changedTouches.length === 1
+          ) {
+            // This was likely a Tap
             const touch = e.changedTouches[0];
-            const element = document.elementFromPoint(
+            const targetElement = document.elementFromPoint(
               touch.clientX,
               touch.clientY
             );
+            const cellElement = targetElement?.closest(".warehouse-cell");
 
-            if (element && element.classList.contains("warehouse-cell")) {
-              const code = element.getAttribute("data-code");
+            if (cellElement) {
+              const code = cellElement.getAttribute("data-code");
               currentPalletCode = code;
               showPopup(code, touch.clientX, touch.clientY);
+              e.preventDefault(); // Prevent potential double-tap zoom
             }
           }
+
+          // Reset flags
+          if (e.touches.length < 2) isPinching = false;
+          if (e.touches.length < 1) isDragging = false;
+          // Reset initial drag calculation offsets if needed, or rely on offsets
+          // initialX = 0; initialY = 0; // Maybe not needed if using offsets correctly
         }
 
+        function getTouchDistance(touches) {
+          const dx = touches[0].clientX - touches[1].clientX;
+          const dy = touches[0].clientY - touches[1].clientY;
+          return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        // Mouse Drag Handlers
         function dragStart(e) {
+          if (e.button !== 0) return; // Only drag with left button // Check if target is not a button inside sticky-controls
+          if (e.target.closest(".sticky-controls")) return;
+
           e.preventDefault();
+          container.style.cursor = "grabbing";
           initialX = e.clientX - xOffset;
           initialY = e.clientY - yOffset;
           isDragging = true;
+          touchMoved = false; // Reset touchMoved flag for click detection consistency
         }
 
         function dragEnd(e) {
-          isDragging = false;
+          if (isDragging) {
+            container.style.cursor = "grab";
+            isDragging = false;
+            // Click logic is now primarily handled by the 'click' event listener
+          }
         }
 
         function drag(e) {
           if (isDragging) {
             e.preventDefault();
+            touchMoved = true; // Mouse drag counts as movement
             currentX = e.clientX - initialX;
             currentY = e.clientY - initialY;
             xOffset = currentX;
@@ -471,170 +720,265 @@
           }
         }
 
+        // --- Transformation & Zoom ---
+
+        /**
+         * Applies the current translation and scale to the draggable area.
+         */
         function setTransform() {
           draggableArea.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale})`;
         }
 
-        function updateScale(delta) {
-          scale += delta;
-          scale = Math.min(Math.max(0.5, scale), 3); // Limit scale between 0.5 and 3
+        /**
+         * Updates the scale factor and adjusts translation to zoom towards a specific origin point.
+         * @param {number} delta - The change in scale factor.
+         * @param {number} originX - The X coordinate of the zoom origin relative to the container.
+         * @param {number} originY - The Y coordinate of the zoom origin relative to the container.
+         */
+        function updateScale(
+          delta,
+          originX = container.clientWidth / 2,
+          originY = container.clientHeight / 2
+        ) {
+          const minScale = 0.1; // Minimum zoom out
+          const maxScale = 5.0; // Maximum zoom in
+          let newScale = scale + delta;
+
+          // Clamp scale within limits
+          newScale = Math.min(Math.max(minScale, newScale), maxScale);
+
+          if (newScale === scale) return; // No change
+
+          // Calculate how much the scale actually changed relative to the previous scale
+          const scaleChangeRatio = newScale / scale;
+
+          // Adjust translation: Move the origin point towards/away from the mouse/pinch center
+          // The point under the mouse (originX, originY) should stay in the same place *relative to the container*
+          // Formula: newTx = originX - (originX - currentTx) * scaleRatio
+          currentX = originX - (originX - currentX) * scaleChangeRatio;
+          currentY = originY - (originY - currentY) * scaleChangeRatio;
+
+          // Update scale and offsets
+          scale = newScale;
+          xOffset = currentX;
+          yOffset = currentY;
+
           setTransform();
         }
 
+        // Zoom button handlers
         function zoomIn() {
-          updateScale(0.1);
+          updateScale(0.2);
         }
-
         function zoomOut() {
-          updateScale(-0.1);
+          updateScale(-0.2);
         }
 
+        /**
+         * Resets the view to fit the entire warehouse layout within the container.
+         */
         function resetView() {
-          currentX = 0;
-          currentY = 0;
-          xOffset = 0;
-          yOffset = 0;
-          scale = 1;
+          const warehouseLayout =
+            draggableArea.querySelector(".warehouse-layout");
+
+          // Wait for layout dimensions, give a default if not ready
+          if (
+            !container ||
+            !warehouseLayout ||
+            warehouseLayout.offsetWidth === 0 ||
+            container.clientWidth === 0
+          ) {
+            console.warn(
+              "Cannot reset view yet, layout/container dimensions not available or zero."
+            );
+            currentX = 10;
+            currentY = 10;
+            scale = 1; // Simple fallback
+          } else {
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            const layoutWidth = warehouseLayout.offsetWidth;
+            const layoutHeight = warehouseLayout.offsetHeight;
+
+            // Calculate scale to fit, leaving some padding (e.g., 90-95%)
+            const paddingFactor = 0.95;
+            const scaleX = (containerWidth / layoutWidth) * paddingFactor;
+            const scaleY = (containerHeight / layoutHeight) * paddingFactor;
+            scale = Math.min(scaleX, scaleY, 1); // Don't scale UP beyond 1 on reset
+
+            // Center the scaled layout
+            const scaledLayoutWidth = layoutWidth * scale;
+            const scaledLayoutHeight = layoutHeight * scale;
+            currentX = (containerWidth - scaledLayoutWidth) / 2;
+            currentY = (containerHeight - scaledLayoutHeight) / 2;
+          }
+
+          // Update offsets and apply transform
+          xOffset = currentX;
+          yOffset = currentY;
           setTransform();
+          console.log(
+            `Reset View: Scale=${scale.toFixed(2)}, X=${currentX.toFixed(
+              0
+            )}, Y=${currentY.toFixed(0)}`
+          );
         }
 
-        function showPopup(code, x, y) {
-          // Determine section based on pallet code
-          let section;
-          const codeNum = parseInt(code.substring(1));
+        // --- Popup Display Logic ---
 
+        /**
+         * Displays the popup with details for the given pallet code near the click/tap coordinates.
+         * @param {string} code - The pallet code (e.g., "P0123").
+         * @param {number} clientX - The clientX coordinate of the click/tap event.
+         * @param {number} clientY - The clientY coordinate of the click/tap event.
+         */
+        function showPopup(code, clientX, clientY) {
+          const cellElement = draggableArea.querySelector(
+            `.warehouse-cell[data-code="${code}"]`
+          );
+          if (!cellElement) return; // Safety check
+
+          // Determine section (using your existing logic)
+          let section = "Unknown";
+          const codeNum = parseInt(code.substring(1));
           if (codeNum >= 466 && codeNum <= 567) {
             section = "OUTSIDE";
           } else if (codeNum >= 241) {
             section = "INSIDE-FRONT";
-          } else {
+          } else if (codeNum >= 1 && codeNum <= 240) {
             section = "INSIDE-BACK";
           }
 
-          // Check if there's data in the database
-          const dbRecord = palletData[code];
-          let hasRecord = dbRecord ? "Yes" : "No";
+          // Get data from cell attributes
+          const dbQuantity = parseInt(
+            cellElement.getAttribute("data-quantity") || "0",
+            10
+          );
+          const lastUpdated = cellElement.getAttribute("data-date") || "N/A";
+          const hasRecord = palletData[code] !== undefined; // Check original data source
 
-          // Get quantity from database or set to 0 if not found
-          const dbQuantity = dbRecord ? dbRecord.quantity : 0;
-
-          // Calculate total quantity based on operation type
+          // Calculate potential result based on current operation
           let totalQuantity, quantityStatus, quantityColor;
+          const currentFormQuantity = formQuantity; // Use already parsed value
 
           if (operationType === "add") {
-            // Addition logic
-            totalQuantity = dbQuantity + formQuantity;
-
-            if (dbQuantity >= 100) {
+            totalQuantity = dbQuantity + currentFormQuantity;
+            if (dbQuantity >= MAX_QUANTITY) {
               quantityStatus = "Already Full";
-              quantityColor = "red";
-            } else if (totalQuantity > 100) {
-              quantityStatus = "Would Exceed Maximum";
-              quantityColor = "red";
-            } else if (totalQuantity >= 80) {
-              quantityStatus = "Near Full";
-              quantityColor = "orange";
+              quantityColor = "#dc3545"; // red
+            } else if (totalQuantity > MAX_QUANTITY) {
+              quantityStatus = `Exceeds Max (${MAX_QUANTITY})`;
+              quantityColor = "#dc3545"; // red
+            } else if (totalQuantity === MAX_QUANTITY) {
+              quantityStatus = "Will be Full";
+              quantityColor = "#fd7e14"; // orange
             } else {
-              quantityStatus = "Normal";
-              quantityColor = "black";
+              quantityStatus = "Space Available";
+              quantityColor = "#28a745"; // green
             }
           } else {
-            // Subtraction logic
-            totalQuantity = dbQuantity - formQuantity;
-
-            if (dbQuantity < formQuantity) {
+            // subtract
+            totalQuantity = dbQuantity - currentFormQuantity;
+            if (dbQuantity === 0) {
+              quantityStatus = "Pallet is Empty";
+              quantityColor = "#6c757d"; // grey
+              totalQuantity = 0; // Ensure total doesn't go negative visually
+            } else if (dbQuantity < currentFormQuantity) {
               quantityStatus = "Insufficient Stock";
-              quantityColor = "red";
+              quantityColor = "#dc3545"; // red
+              // Show what would remain if attempted (negative isn't useful)
+              // totalQuantity = dbQuantity - currentFormQuantity; // Or just show 0?
             } else if (totalQuantity === 0) {
-              quantityStatus = "Will Empty Stock";
-              quantityColor = "orange";
+              quantityStatus = "Will be Empty";
+              quantityColor = "#fd7e14"; // orange
             } else {
-              quantityStatus = "Normal";
-              quantityColor = "black";
+              quantityStatus = "Sufficient Stock";
+              quantityColor = "#28a745"; // green
             }
           }
+          // Ensure displayed total quantity is not negative
+          const displayTotal = Math.max(0, totalQuantity);
 
-          // Get last updated date
-          const lastUpdated = dbRecord
-            ? dbRecord.date
-            : new Date().toLocaleDateString();
-
-          // Populate popup content with enhanced information
+          // Populate popup content
           popupContent.innerHTML = `
-    <h3>Pallet Information</h3>
-    <p><strong>Pallet Code:</strong> ${code}</p>
-    <p><strong>Section:</strong> ${section}</p>
-    <p><strong>Current Quantity:</strong> ${dbQuantity} units</p>
-    <p><strong>Your ${
-      operationType === "add" ? "Input" : "Release"
-    } Quantity:</strong> ${formQuantity} units</p>
-    <p><strong>Total After ${
-      operationType === "add" ? "Addition" : "Release"
-    }:</strong> <span style="color: ${quantityColor}; font-weight: bold">${totalQuantity} units (${quantityStatus})</span></p>
-    <p><strong>Maximum Allowed:</strong> 100 units</p>
-    <p><strong>Last Updated:</strong> ${lastUpdated}</p>
-    <p><strong>Any record in database:</strong> ${hasRecord}</p>
-  `;
+                <h3>Pallet ${code} <small>(${section})</small></h3>
+                <hr>
+                <p><strong>Current Stock:</strong> ${dbQuantity} / ${MAX_QUANTITY} units</p>
+                <p><strong>${
+                  operationType === "add" ? "Adding" : "Releasing"
+                }:</strong> ${currentFormQuantity} units</p>
+                <p><strong>Resulting Stock:</strong> <span style="color: ${quantityColor}; font-weight: bold;">${displayTotal} / ${MAX_QUANTITY} units</span></p>
+                <p><small><em>Status: ${quantityStatus}</em></small></p>
+                <hr>
+                <p><strong>Last Update:</strong> ${lastUpdated}</p>
+                <p><small><em>(Record ${
+                  hasRecord ? "Exists" : "Does Not Exist"
+                } in Source Data)</em></small></p>
+            `;
 
-          // Enable or disable the select button based on quantity
-          const popupSelect = document.getElementById("popup-select");
+          // --- Enable/disable select button ---
+          let isDisabled = false;
+          let disabledTitle = "Select this pallet position";
 
           if (operationType === "add") {
-            // Addition logic (existing)
-            if (dbQuantity >= 100 || totalQuantity > 100) {
-              popupSelect.disabled = true;
-              popupSelect.classList.add("button-disabled");
-              popupSelect.title =
-                dbQuantity >= 100
-                  ? "Cannot select - Pallet is already full"
-                  : "Cannot select - Maximum quantity (100) would be exceeded";
-            } else {
-              popupSelect.disabled = false;
-              popupSelect.classList.remove("button-disabled");
-              popupSelect.title = "Select this pallet position";
+            if (
+              dbQuantity >= MAX_QUANTITY ||
+              dbQuantity + currentFormQuantity > MAX_QUANTITY
+            ) {
+              isDisabled = true;
+              disabledTitle =
+                dbQuantity >= MAX_QUANTITY
+                  ? "Pallet is full"
+                  : "Operation exceeds max capacity";
             }
           } else {
-            // Subtraction logic
-            if (dbQuantity < formQuantity) {
-              popupSelect.disabled = true;
-              popupSelect.classList.add("button-disabled");
-              popupSelect.title = "Cannot select - Not enough stock available";
-            } else {
-              popupSelect.disabled = false;
-              popupSelect.classList.remove("button-disabled");
-              popupSelect.title = "Select this pallet position";
+            // subtract
+            if (dbQuantity < currentFormQuantity || dbQuantity === 0) {
+              isDisabled = true;
+              disabledTitle =
+                dbQuantity === 0
+                  ? "Pallet is empty"
+                  : "Insufficient stock for release";
             }
           }
 
-          // Position and show popup
-          const isMobile = window.innerWidth <= 768;
+          popupSelect.disabled = isDisabled;
+          popupSelect.title = disabledTitle;
+          popupSelect.classList.toggle("button-disabled", isDisabled); // Use class for styling disabled state
 
-          if (isMobile) {
-            // For mobile, center the popup
-            popup.style.left = "50%";
-            popup.style.top = "50%";
-            popup.style.transform = "translate(-50%, -50%)";
-          } else {
-            // For desktop, position near the click
-            popup.style.left = `${x}px`;
-            popup.style.top = `${y}px`;
-            popup.style.transform = "none";
+          // --- Position and Show Popup ---
+          popup.style.display = "block"; // Make it visible first to measure dimensions
 
-            // Adjust popup position if it goes out of viewport
-            setTimeout(() => {
-              const rect = popup.getBoundingClientRect();
-              if (rect.right > window.innerWidth) {
-                popup.style.left = `${x - rect.width}px`;
-              }
-              if (rect.bottom > window.innerHeight) {
-                popup.style.top = `${y - rect.height}px`;
-              }
-            }, 10);
+          const popupRect = popup.getBoundingClientRect();
+          const margin = 10; // Space from viewport edges
+
+          // Default position: below and right of the cursor/tap
+          let popupX = clientX + 15;
+          let popupY = clientY + 15;
+
+          // Adjust if it goes off-screen right
+          if (popupX + popupRect.width > window.innerWidth - margin) {
+            popupX = clientX - popupRect.width - 15; // Move to the left
+          }
+          // Adjust if it goes off-screen left
+          if (popupX < margin) {
+            popupX = margin;
+          }
+          // Adjust if it goes off-screen bottom
+          if (popupY + popupRect.height > window.innerHeight - margin) {
+            popupY = clientY - popupRect.height - 15; // Move above
+          }
+          // Adjust if it goes off-screen top
+          if (popupY < margin) {
+            popupY = margin;
           }
 
-          popup.style.display = "block";
+          popup.style.left = `${popupX}px`;
+          popup.style.top = `${popupY}px`;
+          popup.style.transform = "none"; // Ensure no previous transform interferes
         }
-      });
+      }); // --- End DOMContentLoaded ---
     </script>
+     
   </body>
 </html>
