@@ -1,154 +1,144 @@
 {% extends "base.html" %} {% block content %} {% load static %}
 <head>
   <link rel="stylesheet" href="{% static 'css/forms_styles.css' %}" />
+  <style>
+    /* Paste the CSS from the previous step (full height layout) here */
+    html, body { height: 100%; margin: 0; font-family: "Poppins", sans-serif; }
+    .split-container { display: flex; gap: 20px; padding: 20px; background-color: #f8f9fa; height: 100vh; box-sizing: border-box; }
+    .left-column { flex: 1; overflow-y: auto; }
+    .right-column { flex: 1; display: flex; flex-direction: column; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); overflow: hidden; }
+    .left-column .form-container { padding: 30px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); margin: 0; }
+    .search-results { margin-top: 20px; text-align: center; }
+    .results-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    .results-table th, .results-table td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    .results-table th { background-color: #f2f2f2; font-weight: bold; }
+    .no-stock { color: red; font-weight: bold; margin-top: 20px; }
+
+    /* --- Right column adjustments --- */
+    .right-column h2 { text-align: center; margin-bottom: 15px; font-weight: 500; color: #333; flex-shrink: 0; }
+    /* Style for the dropdown container */
+    .right-column .warehouse-select-container {
+        margin-bottom: 15px; /* Space below dropdown */
+        flex-shrink: 0; /* Prevent shrinking */
+    }
+    /* Reuse form-label and form-select styles if defined in forms_styles.css */
+    /* Ensure .form-select has width: 100%; */
+    .right-column .form-label { display: block; margin-bottom: 8px; font-size: 14px; color: #333; font-weight: 400; }
+    .right-column .form-select { width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px; appearance: none; background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23333%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: right 10px center; background-size: 12px; font-family: "Poppins", sans-serif; }
+
+    .right-column .iframe-container { flex-grow: 1; position: relative; overflow: hidden; }
+    .right-column .modal-iframe { width: 100%; height: 100%; border: none; display: none; /* Initial state */ }
+    /* Make sure the initially displayed iframe is visible */
+    #warehouseInsideFrame {
+        display: block; /* Show 'Inside' by default */
+    }
+  </style>
 </head>
-<style>
-  .search-results {
-    margin-top: 10px;
-    text-align: center;
-  }
 
-  .results-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-  }
+<div class="split-container">
 
-  .results-table th,
-  .results-table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: center;
-  }
-
-  .results-table th {
-    background-color: #f2f2f2;
-    font-weight: bold;
-  }
-
-  .no-stock {
-    color: red;
-    font-weight: bold;
-    margin-top: 20px;
-  }
-</style>
-
-<div class="container">
-  <div class="form-container">
-    <h2 class="form-title">SEARCH PRODUCT INFORMATION</h2>
-
-    <form method="post" action="" id="searchForm">
-      {% csrf_token %}
-
-      <div class="form-group">
-        <label for="search_product" class="form-label">Search Product*</label>
-        <select
-          id="search_product"
-          name="search_product"
-          class="form-select"
-          required
-        >
-          <option value="" selected disabled>Choose a Product</option>
-          <option value="Trolley">Trolley</option>
-          <option value="Armchair">Armchair</option>
-          <option value="Pallets">Pallets</option>
-        </select>
+  <div class="left-column">
+    <div class="form-container">
+      <h2 class="form-title">SEARCH PRODUCT INFORMATION</h2>
+      <form method="post" action="" id="searchForm">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="search_product" class="form-label">Search Product*</label>
+          <select id="search_product" name="search_product" class="form-select" required>
+            <option value="" selected disabled>Choose a Product</option>
+            <option value="Trolley">Trolley</option>
+            <option value="Armchair">Armchair</option>
+            <option value="Pallets">Pallets</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="search_color" class="form-label">Search Color*</label>
+          <select id="search_color" name="search_color" class="form-select" required>
+            <option value="" selected disabled>Choose a Color</option>
+            <option value="green">Green</option>
+            <option value="black">Black</option>
+            <option value="orange">Orange</option>
+          </select>
+        </div>
+        <div class="text-right">
+          <button type="submit" class="submit-btn">Search</button>
+        </div>
+      </form>
+      {% if search_results is not None %}
+      <div class="search-results">
+        <h3>Search Results</h3>
+        {% if search_results %}
+          <table class="results-table">
+             <thead><tr><th>Pallet Number</th><th>Quantity</th></tr></thead>
+             <tbody>
+                {% for pallet, quantity in search_results %}
+                <tr><td>{{ pallet }}</td><td>{{ quantity }}</td></tr>
+                {% endfor %}
+             </tbody>
+          </table>
+        {% else %}
+          <p class="no-stock">No stock available for the selected product and color.</p>
+        {% endif %}
       </div>
-
-      <div class="form-group">
-        <label for="search_color" class="form-label">Search Color*</label>
-        <select
-          id="search_color"
-          name="search_color"
-          class="form-select"
-          required
-        >
-          <option value="" selected disabled>Choose a Color</option>
-          <option value="green">Green</option>
-          <option value="black">Black</option>
-          <option value="orange">Orange</option>
-        </select>
-      </div>
-
-      <div class="text-right">
-        <button type="submit" class="submit-btn">Search</button>
-      </div>
-    </form>
-
-    {% if search_results is not None %}
-    <div class="search-results">
-      <h3>Search Results</h3>
-      {% if search_results %}
-      <table class="results-table">
-        <thead>
-          <tr>
-            <th>Pallet Number</th>
-            <th>Quantity</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for pallet, quantity in search_results %}
-          <tr>
-            <td>{{ pallet }}</td>
-            <td>{{ quantity }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      {% else %}
-      <p class="no-stock">
-        No stock available for the selected product and color.
-      </p>
       {% endif %}
     </div>
-    {% endif %}
-  </div>
-</div>
-<div class="right-sidebar">
-  <h2 class="text-center mb-4">Warehouse Layouts</h2>
-
-  <div class="warehouse-tabs">
-    <div class="warehouse-tab active" id="tab-inside">Warehouse Area</div>
-    <div class="warehouse-tab" id="tab-outside">Warehouse Outside</div>
   </div>
 
-  <div class="iframe-container">
-    <iframe
-      id="warehouseInsideFrame"
-      class="modal-iframe"
-      src="{% url 'forms:warehouse_area' %}"
-      style="display: block"
-    ></iframe>
-    <iframe
-      id="warehouseOutsideFrame"
-      class="modal-iframe"
-      style="display: none"
-      src="{% url 'forms:warehouse_outside' %}"
-    ></iframe>
+  <div class="right-column">
+    <h2>Warehouse Layouts</h2>
+
+    <div class="warehouse-select-container form-group">
+      <label for="warehouseViewSelect" class="form-label">Select Warehouse View</label>
+      <select id="warehouseViewSelect" class="form-select">
+        <option value="inside" selected>Warehouse Area</option> <option value="outside">Warehouse Outside</option>
+      </select>
+    </div>
+    <div class="iframe-container">
+      <iframe
+        id="warehouseInsideFrame"
+        class="modal-iframe"
+        src="{% url 'forms:warehouse_area' %}"
+        ></iframe>
+      <iframe
+        id="warehouseOutsideFrame"
+        class="modal-iframe"
+        src="{% url 'forms:warehouse_outside' %}"
+        ></iframe>
+    </div>
   </div>
-</div>
+
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  const insideTab = document.getElementById("tab-inside");
-  const outsideTab = document.getElementById("tab-outside");
+  // Get references to elements
+  const viewSelect = document.getElementById("warehouseViewSelect");
   const insideIframe = document.getElementById("warehouseInsideFrame");
   const outsideIframe = document.getElementById("warehouseOutsideFrame");
 
-  insideTab.addEventListener("click", function () {
-    insideTab.classList.add("active");
-    outsideTab.classList.remove("active");
-    insideIframe.style.display = "block";
-    outsideIframe.style.display = "none";
-  });
+  // Function to update iframe visibility based on selection
+  function updateIframeView() {
+    const selectedValue = viewSelect.value;
 
-  outsideTab.addEventListener("click", function () {
-    outsideTab.classList.add("active");
-    insideTab.classList.remove("active");
-    outsideIframe.style.display = "block";
-    insideIframe.style.display = "none";
-  });
+    if (selectedValue === "inside") {
+      insideIframe.style.display = "block";
+      outsideIframe.style.display = "none";
+    } else if (selectedValue === "outside") {
+      insideIframe.style.display = "none";
+      outsideIframe.style.display = "block";
+    }
+  }
+
+  // Add event listener for dropdown changes
+  viewSelect.addEventListener("change", updateIframeView);
+
+  // Initial setup - ensure the correct iframe is visible on load
+  // (The CSS now handles the initial display of 'warehouseInsideFrame')
+  // updateIframeView(); // You could call this, but CSS rule is cleaner for initial state
+
+  // --- Keep Search Form related JS if any ---
+  // ...
 });
 </script>
+
 {% endblock %}
