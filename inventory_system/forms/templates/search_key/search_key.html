@@ -41,6 +41,7 @@
     .search-results {
       margin-top: 20px;
       text-align: center;
+      font-size: small;
     }
     .results-table {
       width: 100%;
@@ -114,17 +115,22 @@
     #warehouseInsideFrame {
       display: block; /* Show 'Inside' by default */
     }
+    .small-text {
+      font-size: small;
+    }
   </style>
 </head>
 
 <div class="split-container">
   <div class="left-column">
     <div class="form-container">
-      <h2 class="form-title">SEARCH PRODUCT INFORMATION</h2>
+      <h2 class="form-title">SEARCH PRODUCT</h2>
       <form method="post" action="" id="searchForm">
         {% csrf_token %}
         <div class="form-group">
-          <label for="search_product" class="form-label">Search Product*</label>
+          <label for="search_product" class="form-label small-text"
+            >Search Product*</label
+          >
           <select
             id="search_product"
             name="search_product"
@@ -138,7 +144,9 @@
           </select>
         </div>
         <div class="form-group">
-          <label for="search_color" class="form-label">Search Color*</label>
+          <label for="search_color" class="form-label small-text"
+            >Search Color*</label
+          >
           <select
             id="search_color"
             name="search_color"
@@ -151,8 +159,8 @@
             <option value="orange">Orange</option>
           </select>
         </div>
-        <div class="text-right">
-          <button type="submit" class="submit-btn">Search</button>
+        <div>
+          <button type="submit" class="submit-btn small-text">Search</button>
         </div>
       </form>
       {% if search_results is not None %}
@@ -188,7 +196,7 @@
   <div class="right-column">
     <h2>WAREHOUSE LAYOUTS</h2>
 
-    <div class="warehouse-select-container form-group">
+    <div class="warehouse-select-container form-group small-text">
       <label for="warehouseViewSelect" class="form-label"
         >Select Warehouse View</label
       >
