@@ -5,7 +5,7 @@
   <style>
     html,
     body {
-      height: 100%;
+      /* height: 100%; */ /* Removed */
       margin: 0;
       font-family: "Poppins", sans-serif;
     }
@@ -15,15 +15,23 @@
       gap: 20px;
       padding: 20px;
       background-color: #f8f9fa;
-      height: 100vh;
+      /* height: 100vh; */ /* REMOVED - Allow container to grow with content */
+      min-height: calc(
+        100vh - 40px
+      ); /* Optional: Ensure it's at least viewport height minus padding */
       box-sizing: border-box;
+      /* Add align-items: flex-start if you DON'T want columns to stretch to the same height */
+      align-items: stretch; /* Default, makes columns same height */
     }
 
     .left-column {
       flex: 1;
-      overflow-y: auto;
+      /* overflow-y: auto; */ /* REMOVED - Prevent internal scrolling */
       /* Add padding to prevent scrollbar overlap */
-      padding-right: 5px;
+      /* padding-right: 5px; */ /* REMOVED - No longer needed */
+      display: flex; /* Optional: Helps manage child margins */
+      flex-direction: column; /* Optional: Stack children vertically */
+      gap: 20px; /* Optional: Consistent spacing between form containers */
     }
 
     .right-column {
@@ -35,6 +43,7 @@
       border-radius: 8px;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
       overflow: hidden; /* Keep this to contain iframe */
+      /* No explicit height needed, will stretch due to align-items: stretch */
     }
 
     .left-column .form-container {
@@ -42,17 +51,17 @@
       background-color: #ffffff;
       border-radius: 8px;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      margin: 0; /* Reset margin */
+      margin: 0; /* Reset margin, rely on gap in parent */
     }
 
-    /* Add margin between form containers */
-    .left-column .form-container + .form-container {
-      margin-top: 20px;
-    }
+    /* Removed the rule for margin between form containers */
+    /* .left-column .form-container + .form-container {
+        margin-top: 20px;
+      } */
 
     .search-results,
     .pallet-contents-results {
-      margin-top: 20px;
+      margin-top: 20px; /* Keep or adjust if needed */
       font-size: small;
       position: relative; /* Needed for absolute positioning of close button if desired */
     }
@@ -73,7 +82,6 @@
 
     .close-results-btn {
       padding: 4px 8px;
-      /* margin-left: 10px; */ /* Removed - using flex justify-content */
       cursor: pointer;
       background-color: #e7e7e7;
       border: 1px solid #ccc;
@@ -101,8 +109,8 @@
 
     .no-stock,
     .no-items {
-      color: #6c757d; /* Changed from red for less alarm */
-      font-weight: normal; /* Changed from bold */
+      color: #6c757d;
+      font-weight: normal;
       margin-top: 20px;
       text-align: center;
       font-style: italic;
@@ -149,18 +157,24 @@
       overflow: hidden; /* Crucial: Ensures iframe content doesn't overflow the container */
       border: 1px solid #dee2e6; /* Add a subtle border */
       border-radius: 4px;
+      min-height: 400px; /* Example minimum height, adjust as needed */
     }
 
     .right-column .modal-iframe {
       width: 100%;
       height: 100%;
       border: none;
-      display: none; /* Initially hide both */
+      display: none; /* Initially hide all */
+      position: absolute; /* Position absolutely within the container */
+      top: 0;
+      left: 0;
     }
 
     /* Default visible iframe (can be changed by JS) */
+    /* Style the initially visible iframe to be relative */
     #warehouseInsideFrame {
-      display: block;
+       display: block; /* Make this one visible by default */
+       position: relative; /* Override absolute positioning */
     }
 
     .small-text {
@@ -304,7 +318,7 @@
               value="{{ pallet_searched|default:'' }}"
               placeholder="e.g., P0123 or click map"
             />
-            </div>
+          </div>
           <div>
             <button type="submit" class="submit-btn small-text">
               Search Contents
@@ -344,7 +358,9 @@
             </tbody>
           </table>
           {% else %}
-          <p class="no-items">Pallet {{ pallet_searched }} is empty or not found.</p>
+          <p class="no-items">
+            Pallet {{ pallet_searched }} is empty or not found.
+          </p>
           {% endif %}
         </div>
         {% endif %}
@@ -390,13 +406,18 @@
         if (!viewSelect) return;
         const selectedValue = viewSelect.value;
 
-        if (insideIframe)
-          insideIframe.style.display =
-            selectedValue === "inside" ? "block" : "none";
+        // Ensure iframes exist before trying to style them
+        if (insideIframe) {
+             insideIframe.style.display = selectedValue === "inside" ? "block" : "none";
+             // Ensure correct positioning is reapplied if needed
+             insideIframe.style.position = selectedValue === "inside" ? "relative" : "absolute";
+        }
 
-        if (outsideIframe)
-          outsideIframe.style.display =
-            selectedValue === "outside" ? "block" : "none";
+        if (outsideIframe){
+            outsideIframe.style.display = selectedValue === "outside" ? "block" : "none";
+             // Ensure correct positioning is reapplied if needed
+             outsideIframe.style.position = selectedValue === "outside" ? "relative" : "absolute";
+        }
       }
 
       if (viewSelect) {
@@ -429,7 +450,7 @@
         });
       }
 
-      // --- ***** NEW: IFRAME MESSAGE LISTENER ***** ---
+      // --- ***** IFRAME MESSAGE LISTENER ***** ---
       window.addEventListener(
         "message",
         function (event) {
@@ -460,7 +481,7 @@
         },
         false
       );
-      // --- ***** END NEW: IFRAME MESSAGE LISTENER ***** ---
+      // --- ***** END IFRAME MESSAGE LISTENER ***** ---
     });
   </script>
 </body>
