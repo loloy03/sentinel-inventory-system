@@ -4,9 +4,14 @@ import json
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
-from .models import FromsStock
+
+# Make sure to import both models and the User model if using the user field
+from .models import FromsStock, StockHistory
 from django.db.models import Sum
 from django.contrib.auth.decorators import login_required
+
+# Potentially import settings if you need AUTH_USER_MODEL directly
+# from django.conf import settings
 
 # Define the scope and credentials for Google Sheets API
 SCOPE = [
@@ -22,182 +27,245 @@ def dashboard(request):
     return render(request, "dashboard/dashboard.html")
 
 
-# Create your views here.
+# Add login_required if you want to track the user
+@login_required
 def receive_form(request):
-    # Initialize a variable to store success data for the template
     success_data = None
-
     if request.method == "POST":
-        # Get form data
+        # --- Get form data (same as before) ---
         production_code = request.POST.get("production_code")
         product = request.POST.get("product_received")
         color = request.POST.get("color")
         quantity = int(request.POST.get("quantity"))
-        date = request.POST.get("date")
+        date_str = request.POST.get("date")  # Keep original date string for history
         status = request.POST.get("status")
         pallet_position = request.POST.get("pallet_position")
-
-        # Create item code by combining product and color
         item_code = f"{product}{color}"
-
-        # Create warehouse ID
         warehouse_id = f"{production_code}{pallet_position}"
+        formatted_date_gsheet = datetime.strptime(date_str, "%Y-%m-%d").strftime(
+            "%m/%d/%Y"
+        )  # For Google Sheet
+        transaction_date = datetime.strptime(
+            date_str, "%Y-%m-%d"
+        ).date()  # For DB DateField
 
-        # Format the date as shown in the Google Sheet
-        formatted_date = datetime.strptime(date, "%Y-%m-%d").strftime("%m/%d/%Y")
+        # --- Update or Create FromsStock (Consider if you need to add quantity) ---
+        # Option 1: Always create a new record (if warehouse_id should be unique per receipt)
+        # Option 2: Update if exists, create if not (if warehouse_id represents a location+batch)
+        # Your current code uses create, let's stick with that for now, assuming warehouse_id is unique per receipt.
+        # If it's *not* unique, you'd use get_or_create and update the quantity.
 
-        # Save to database
-        stock_entry = FromsStock.objects.create(
-            production_code=production_code,
-            date=date,
-            product=product,
-            color=color,
-            item_code=item_code,
-            quantity=quantity,
-            pallet_position=pallet_position,
-            status=status,
-            warehouse_id=warehouse_id,
-        )
-
-        # Prepare row data for Google Sheets
-        row_data = [
-            production_code,
-            product,
-            color,
-            item_code,
-            quantity,
-            formatted_date,
-            pallet_position,
-            status,
-            warehouse_id,
-        ]
-
-        # Save to appropriate Google Sheets based on status
-        success = save_to_multiple_sheets(status, row_data)
-
-        if success:
-            # Store success data for the confirmation display
-            success_data = {
-                "production_code": production_code,
-                "product": product,
-                "color": color,
-                "quantity": quantity,
-                "date": formatted_date,
-                "status": status,
-                "pallet_position": pallet_position,
-                "warehouse_id": warehouse_id,
-                "item_code": item_code,
-            }
-
-            messages.success(
-                request,
-                f"Stock entry received and added to Google Sheets: {quantity} units of {product} in {color}",
+        # We'll wrap this in a try...except in case the primary key constraint fails etc.
+        try:
+            stock_entry, created = FromsStock.objects.update_or_create(
+                warehouse_id=warehouse_id,  # Use warehouse_id as the lookup
+                defaults={
+                    "production_code": production_code,
+                    "date": transaction_date,
+                    "product": product,
+                    "color": color,
+                    "item_code": item_code,
+                    "pallet_position": pallet_position,
+                    "status": status,
+                    "quantity": quantity,  # Set initial quantity or add to existing if using get_or_create with update logic
+                },
             )
-        else:
-            messages.error(
-                request, "Failed to connect to Google Sheets. Data saved locally only."
+            # If you intended to *add* quantity if the record exists, the logic would be different:
+            # stock_entry, created = FromsStock.objects.get_or_create(
+            #     warehouse_id=warehouse_id,
+            #     defaults={ ... initial values ... }
+            # )
+            # if not created:
+            #     stock_entry.quantity += quantity # Add quantity
+            #     stock_entry.date = transaction_date # Update date?
+            #     stock_entry.status = status # Update status?
+            #     stock_entry.save()
+
+            # --- !! CREATE HISTORY RECORD !! ---
+            StockHistory.objects.create(
+                transaction_type="RECEIVE",
+                user=request.user,  # Assumes login_required
+                warehouse_id=warehouse_id,
+                production_code=production_code,
+                date_of_transaction=transaction_date,
+                product=product,
+                color=color,
+                item_code=item_code,
+                pallet_position=pallet_position,
+                status=status,  # Status of this transaction
+                quantity_change=quantity,  # Positive for receive
             )
+            # --- History record created ---
+
+            # --- Prepare Google Sheet data (same as before) ---
+            row_data = [
+                production_code,
+                product,
+                color,
+                item_code,
+                quantity,
+                formatted_date_gsheet,
+                pallet_position,
+                status,
+                warehouse_id,
+            ]
+            success = save_to_multiple_sheets(status, row_data)
+
+            if success:
+                success_data = {  # Populate success_data as before
+                    "production_code": production_code,
+                    "product": product,
+                    "color": color,
+                    "quantity": quantity,
+                    "date": formatted_date_gsheet,
+                    "status": status,
+                    "pallet_position": pallet_position,
+                    "warehouse_id": warehouse_id,
+                    "item_code": item_code,
+                }
+                messages.success(
+                    request,
+                    f"Stock entry received ({quantity} units of {product} {color}) and logged.",
+                )
+            else:
+                messages.error(
+                    request,
+                    "Failed to connect to Google Sheets. Data saved locally only.",
+                )
+                # Still set success_data if local save was okay
+                success_data = {...}
+
+        except Exception as e:
+            # Handle potential database errors during FromsStock creation/update
+            messages.error(request, f"Error saving stock data: {e}")
+            # Don't create history if the main operation failed
 
     return render(
         request, "receive_form/receive_form.html", {"success_data": success_data}
     )
 
 
+# Add login_required if you want to track the user
+@login_required
 def release_form(request):
-    # Initialize a variable to store success data for the template
     success_data = None
-
     if request.method == "POST":
-        # Get form data
+        # --- Get form data (same as before) ---
         production_code = request.POST.get("production_code")
         product = request.POST.get("product_released")
         color = request.POST.get("color")
-        quantity = int(request.POST.get("quantity"))
-        date = request.POST.get("date")
-        status = request.POST.get("status")
+        quantity_to_release = int(request.POST.get("quantity"))  # Rename for clarity
+        date_str = request.POST.get("date")
+        status = request.POST.get(
+            "status"
+        )  # Status of the release action (DELIVERY, REJECT etc)
         pallet_position = request.POST.get("pallet_position")
-
-        # Create item code by combining product and color
         item_code = f"{product}{color}"
-
-        # Create warehouse ID
         warehouse_id = f"{production_code}{pallet_position}"
-
-        # Format the date as shown in the Google Sheet
-        formatted_date = datetime.strptime(date, "%Y-%m-%d").strftime("%m/%d/%Y")
+        formatted_date_gsheet = datetime.strptime(date_str, "%Y-%m-%d").strftime(
+            "%m/%d/%Y"
+        )
+        transaction_date = datetime.strptime(date_str, "%Y-%m-%d").date()
 
         try:
-            # Find the exact record with the warehouse_id
+            # Find the exact stock record to release from
             stock_record = FromsStock.objects.get(
                 warehouse_id=warehouse_id, product=product, color=color
             )
 
-            # Check if there's enough quantity to release
-            if stock_record.quantity < quantity:
+            # Check if there's enough quantity
+            if stock_record.quantity < quantity_to_release:
                 messages.error(
                     request,
-                    f"Error: Insufficient stock. Available quantity is {stock_record.quantity}",
+                    f"Error: Insufficient stock for {warehouse_id}. Available: {stock_record.quantity}, Tried to release: {quantity_to_release}",
                 )
                 return render(
                     request, "release_form/release_form.html", {"success_data": None}
                 )
 
-            # Decrease the quantity
-            stock_record.quantity -= quantity
+            # --- Decrease the quantity ---
+            original_quantity = (
+                stock_record.quantity
+            )  # Store before change if needed for history
+            stock_record.quantity -= quantity_to_release
+            # Optional: Update status/date on the main record if release changes it?
+            # stock_record.status = status # Maybe update the status of the remaining stock?
+            # stock_record.date = transaction_date
             stock_record.save()
 
-        except FromsStock.DoesNotExist:
-            # Handle case where no matching record exists
-            messages.error(
-                request, "Error: No matching stock record found for the given details"
+            # --- !! CREATE HISTORY RECORD !! ---
+            StockHistory.objects.create(
+                transaction_type="RELEASE",
+                user=request.user,  # Assumes login_required
+                warehouse_id=warehouse_id,
+                production_code=production_code,  # Or stock_record.production_code
+                date_of_transaction=transaction_date,
+                product=product,  # Or stock_record.product
+                color=color,  # Or stock_record.color
+                item_code=item_code,  # Or stock_record.item_code
+                pallet_position=pallet_position,  # Or stock_record.pallet_position
+                status=status,  # Status of this transaction (e.g., DELIVERY)
+                quantity_change=-quantity_to_release,  # Negative for release
+                # quantity_before=original_quantity, # Optional
+                # quantity_after=stock_record.quantity, # Optional
             )
+            # --- History record created ---
+
+            # --- Prepare Google Sheet data (use released quantity) ---
+            row_data = [
+                production_code,
+                product,
+                color,
+                item_code,
+                quantity_to_release,  # Log released amount
+                formatted_date_gsheet,
+                pallet_position,
+                status,
+                warehouse_id,
+            ]
+            success = save_to_multiple_sheets(status, row_data)  # Log release to sheets
+
+            if success:
+                success_data = {  # Show details of the release action
+                    "production_code": production_code,
+                    "product": product,
+                    "color": color,
+                    "quantity": quantity_to_release,
+                    "date": formatted_date_gsheet,
+                    "status": status,
+                    "pallet_position": pallet_position,
+                    "warehouse_id": warehouse_id,
+                    "item_code": item_code,
+                }
+                messages.success(
+                    request,
+                    f"Stock release recorded ({quantity_to_release} units of {product} {color}) and logged.",
+                )
+            else:
+                messages.error(
+                    request,
+                    "Failed to connect to Google Sheet. Data saved locally only.",
+                )
+                # Still set success_data if local save was okay
+                success_data = {...}
+
+        except FromsStock.DoesNotExist:
+            messages.error(
+                request,
+                f"Error: No matching stock record found for Warehouse ID {warehouse_id} with Product {product} / Color {color}",
+            )
+            # Don't create history if the record doesn't exist
             return render(
                 request, "release_form/release_form.html", {"success_data": None}
             )
-
-        # Prepare row data for Google Sheets (still track the release)
-        row_data = [
-            production_code,
-            product,
-            color,
-            item_code,
-            quantity,
-            formatted_date,
-            pallet_position,
-            status,
-            warehouse_id,
-        ]
-
-        # Save to appropriate Google Sheets based on status
-        success = save_to_multiple_sheets(status, row_data)
-
-        if success:
-            # Store success data for the confirmation display
-            success_data = {
-                "production_code": production_code,
-                "product": product,
-                "color": color,
-                "quantity": quantity,
-                "date": formatted_date,
-                "status": status,
-                "pallet_position": pallet_position,
-                "warehouse_id": warehouse_id,
-                "item_code": item_code,
-            }
-
-            messages.success(
-                request,
-                f"Stock release recorded and updated in Google Sheet: {quantity} units of {product} in {color} released",
-            )
-        else:
-            messages.error(
-                request, "Failed to connect to Google Sheet. Data saved locally only."
-            )
+        except Exception as e:
+            # Handle potential database errors during FromsStock update
+            messages.error(request, f"Error updating stock data: {e}")
+            # Don't create history if the main operation failed
 
     return render(
         request, "release_form/release_form.html", {"success_data": success_data}
     )
-
 
 def save_to_multiple_sheets(status, row_data):
     """Save data to multiple Google Sheets based on status"""
