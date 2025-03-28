@@ -1,0 +1,160 @@
+{% extends "base.html" %} {% load static %} {% block content %}
+<head>
+  <link rel="stylesheet" href="{% static 'css/forms_styles.css' %}" />
+
+  {# --- ADD THIS STYLE BLOCK --- #}
+  <style>
+    /* Override container width specifically for the history page */
+    .container {
+      max-width: 95%; /* Use a large percentage or 'none' for full width */
+      /* Adjust margin if needed, e.g., margin: 10px auto; */
+    }
+
+    .form-container {
+      max-width: none;
+    }
+
+    /* Existing table and pagination styles */
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 0.9rem;
+    }
+    /* ... other styles from previous version ... */
+    .history-table th,
+    .history-table td {
+      border: 1px solid #ddd;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .history-table th {
+      background-color: #f2f2f2;
+      font-weight: bold;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    .history-table tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    .history-table tr:hover {
+      background-color: #e9e9e9;
+    }
+    .positive-change {
+      color: green;
+      font-weight: bold;
+    }
+    .negative-change {
+      color: red;
+      font-weight: bold;
+    }
+    .table-responsive {
+      overflow-x: auto;
+      margin-bottom: 15px;
+    }
+    .pagination {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .pagination .step-links a,
+    .pagination .current {
+      margin: 0 0.25rem;
+      padding: 0.3rem 0.6rem;
+      border: 1px solid #ddd;
+      text-decoration: none;
+      border-radius: 3px;
+      color: #007bff;
+    }
+    .pagination .current {
+      background-color: #f0f0f0;
+      font-weight: bold;
+      color: #495057;
+    }
+    .pagination .disabled {
+      color: #6c757d;
+      pointer-events: none;
+      border-color: #ddd;
+    }
+  </style>
+  {# --- END OF ADDED STYLE BLOCK --- #}
+</head>
+
+<div class="container">
+  {# This container will now use the overridden max-width #}
+  <div class="form-container">
+    {# This might also need override if it limits width #}
+    <h2 class="form-title">{{ title|default:"Stock Transaction History" }}</h2>
+
+    {% if page_obj.object_list %}
+    <div class="table-responsive">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Type</th>
+            <th>Qty Chg</th>
+            <th>Product</th>
+            <th>Color</th>
+            <th>Pallet Pos.</th>
+            <th>Warehouse ID</th>
+            <th>Status</th>
+            <th>User</th>
+            <th>Form Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record in page_obj %}
+          <tr>
+            <td>{{ record.timestamp|date:"Y-m-d H:i" }}</td>
+            <td>{{ record.get_transaction_type_display }}</td>
+            <td
+              class="{% if record.quantity_change > 0 %}positive-change{% elif record.quantity_change < 0 %}negative-change{% endif %}"
+            >
+              {{ record.quantity_change }}
+            </td>
+            <td>{{ record.product }}</td>
+            <td>{{ record.color }}</td>
+            <td>{{ record.pallet_position }}</td>
+            <td>{{ record.warehouse_id }}</td>
+            <td>{{ record.status }}</td>
+            <td>{{ record.user.username|default:"--" }}</td>
+            <td>{{ record.date_of_transaction|date:"Y-m-d" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {# Pagination Links (same as before) #}
+    <div class="pagination">
+      <span class="step-links">
+        {% if page_obj.has_previous %}
+        <a href="?page=1">&laquo; First</a>
+        <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+        {% else %}
+        <span class="disabled">&laquo; First</span>
+        <span class="disabled">Previous</span>
+        {% endif %}
+        <span class="current">
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </span>
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">Next</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+        {% else %}
+        <span class="disabled">Next</span>
+        <span class="disabled">Last &raquo;</span>
+        {% endif %}
+      </span>
+    </div>
+
+    {% else %}
+    <div class="alert alert-info" style="margin-top: 20px">
+      No stock history records found.
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

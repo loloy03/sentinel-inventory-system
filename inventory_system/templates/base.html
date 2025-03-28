@@ -82,7 +82,7 @@
         color: white;
         border: none;
         padding: 8px 16px;
-        border-radius: 4px; 
+        border-radius: 4px;
         cursor: pointer;
         font-weight: bold;
         margin-left: 15px;
@@ -182,7 +182,10 @@
     <header>
       <div class="nav-container">
         <div class="logo">
-          <img src="/static/images/sentinel-logo-removebg-preview.png" alt="Sentinel" />
+          <img
+            src="/static/images/sentinel-logo-removebg-preview.png"
+            alt="Sentinel"
+          />
         </div>
         <div class="menu-toggle" id="mobile-menu">
           <span></span>
@@ -194,19 +197,17 @@
             {% if user.is_authenticated %}
             <li><a href="{% url 'forms:dashboard' %}">Dashboard</a></li>
             <li>
-              <a href="{% url 'forms:receive_form' %}"
-                >Receiving Inventory</a
-              >
+              <a href="{% url 'forms:receive_form' %}">Receiving Inventory</a>
             </li>
             <li>
-              <a href="{% url 'forms:release_form' %}"
-                >Releasing Inventory</a
-              >
+              <a href="{% url 'forms:release_form' %}">Releasing Inventory</a>
             </li>
             <li>
-              <a href="{% url 'forms:search_key' %}"
-                >Warehouse Layout</a
-              >
+              <a href="{% url 'forms:search_key' %}">Warehouse Layout</a>
+            </li>
+
+            <li>
+              <a href="{% url 'forms:history' %}">History</a>
             </li>
             {% else %}
             <li><a href="{% url 'login' %}">Login</a></li>

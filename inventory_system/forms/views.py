@@ -10,6 +10,9 @@ from .models import FromsStock, StockHistory
 from django.db.models import Sum
 from django.contrib.auth.decorators import login_required
 
+from django.core.paginator import Paginator
+from .models import StockHistory # Make sure StockHistory is imported
+
 # Potentially import settings if you need AUTH_USER_MODEL directly
 # from django.conf import settings
 
@@ -481,3 +484,25 @@ def search_pallet(request):
     }
     # Render the SAME template
     return render(request, "search_key/search_key.html", context)
+
+@login_required # Good practice to protect history view
+def history_view(request):
+    """
+    Fetches and displays the paginated stock transaction history.
+    """
+    history_list = StockHistory.objects.all() # Fetches all records, ordered by '-timestamp' (from Model's Meta)
+
+    # Set up Pagination
+    paginator = Paginator(history_list, 20) # Show 20 records per page (adjust as needed)
+    page_number = request.GET.get('page') # Get page number from URL query parameter ?page=X
+    page_obj = paginator.get_page(page_number) # Get the specific page
+
+    context = {
+        'page_obj': page_obj, # Pass the paginated page object to the template
+        'title': 'Stock Transaction History' # Add a title for the page
+    }
+    # Ensure you have a url pattern pointing to this view
+    # The template path assumes 'history.html' is inside a 'history' folder
+    # Adjust path if your template is located differently (e.g., 'forms/history.html')
+    return render(request, 'history/history.html', context)
+
