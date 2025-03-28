@@ -235,7 +235,7 @@
         <div class="detail-value">{{ success_data.date }}</div>
       </div>
     </div>
-    
+
     <div class="confirmation-footer">
       <button class="confirmation-button" id="confirmationCloseBtn">
         Continue
@@ -438,18 +438,23 @@
             }
           }
         }
-        if (data.quantity) {
+        if (data.quantity)
           document.getElementById("quantity").value = data.quantity;
-          updateSelectPositionButtonState();
-        }
         if (data.pallet_position)
           document.getElementById("pallet_position").value =
             data.pallet_position;
         if (data.date) document.getElementById("date").value = data.date;
+
+        // *** ADD THIS LINE HERE ***
+        // After potentially updating the quantity field, re-evaluate the button state.
+        updateSelectPositionButtonState();
       } catch (error) {
         console.error("Error parsing QR code data:", error);
         scanResult.textContent =
           "Error parsing QR code data. Please try again.";
+        // Optional: You might want to call it here too if an error occurs,
+        // depending on whether default values might enable the button.
+        // updateSelectPositionButtonState();
       }
     }
 
