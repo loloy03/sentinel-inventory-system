@@ -2,13 +2,13 @@
 <head>
   <link rel="stylesheet" href="{% static 'css/forms_styles.css' %}" />
   <style>
-    /* Paste the CSS from the previous step (full height layout) here */
     html,
     body {
       height: 100%;
       margin: 0;
       font-family: "Poppins", sans-serif;
     }
+
     .split-container {
       display: flex;
       gap: 20px;
@@ -17,10 +17,12 @@
       height: 100vh;
       box-sizing: border-box;
     }
+
     .left-column {
       flex: 1;
       overflow-y: auto;
     }
+
     .right-column {
       flex: 1;
       display: flex;
@@ -31,6 +33,7 @@
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
       overflow: hidden;
     }
+
     .left-column .form-container {
       padding: 30px;
       background-color: #ffffff;
@@ -38,52 +41,53 @@
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
       margin: 0;
     }
+
+    .left-column .form-container + .form-container {
+      margin-top: 20px;
+    }
+
     .search-results {
       margin-top: 20px;
-      /* Removed text-align: center; to allow button alignment */
       font-size: small;
-      position: relative; /* Added for potential absolute positioning of close button if needed */
+      position: relative;
     }
-    /* Style for the close button */
+
     .close-results-btn {
-      /* Basic styling - adjust as needed */
       padding: 4px 8px;
-      margin-left: 10px; /* Space from the title */
-      margin-bottom: 10px; /* Space below button/title */
+      margin-left: 10px;
+      margin-bottom: 10px;
       cursor: pointer;
       background-color: #e7e7e7;
       border: 1px solid #ccc;
       border-radius: 4px;
-      font-size: x-small; /* Make button text smaller */
-      /* Optional: Position top-right
-      position: absolute;
-      top: 0;
-      right: 0;
-      */
+      font-size: x-small;
     }
+
     .results-table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
     }
+
     .results-table th,
     .results-table td {
       border: 1px solid #ddd;
       padding: 8px;
       text-align: center;
     }
+
     .results-table th {
       background-color: #f2f2f2;
       font-weight: bold;
     }
+
     .no-stock {
       color: red;
       font-weight: bold;
       margin-top: 20px;
-      text-align: center; /* Center the 'no stock' message */
+      text-align: center;
     }
 
-    /* --- Right column adjustments --- */
     .right-column h2 {
       text-align: center;
       margin-bottom: 15px;
@@ -91,13 +95,12 @@
       color: #333;
       flex-shrink: 0;
     }
-    /* Style for the dropdown container */
+
     .right-column .warehouse-select-container {
-      margin-bottom: 15px; /* Space below dropdown */
-      flex-shrink: 0; /* Prevent shrinking */
+      margin-bottom: 15px;
+      flex-shrink: 0;
     }
-    /* Reuse form-label and form-select styles if defined in forms_styles.css */
-    /* Ensure .form-select has width: 100%; */
+
     .right-column .form-label {
       display: block;
       margin-bottom: 8px;
@@ -105,6 +108,7 @@
       color: #333;
       font-weight: 400;
     }
+
     .right-column .form-select {
       width: 100%;
       padding: 10px;
@@ -124,91 +128,173 @@
       position: relative;
       overflow: hidden;
     }
+
     .right-column .modal-iframe {
       width: 100%;
       height: 100%;
       border: none;
-      display: none; /* Initial state */
+      display: none;
     }
-    /* Make sure the initially displayed iframe is visible */
+
     #warehouseInsideFrame {
-      display: block; /* Show 'Inside' by default */
+      display: block;
     }
+
     .small-text {
       font-size: small;
     }
-    /* Align heading and button */
+
     .search-results-header {
       display: flex;
-      justify-content: space-between; /* Pushes title left, button right */
-      align-items: center; /* Vertically aligns title and button */
-      margin-bottom: 10px; /* Space below header */
-    }
-    .search-results-header h3 {
-      margin: 0; /* Remove default margin from h3 */
-    }
-    .search-results-header .close-results-btn {
-      margin: 0; /* Remove default margin from button */
-    }
-    .form-divider {
-        border-top: 1px solid #eee;
-        margin-top: 30px;
-        padding-top: 30px;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
     }
 
-    /* Styling for the pallet contents results */
+    .search-results-header h3 {
+      margin: 0;
+    }
+
+    .search-results-header .close-results-btn {
+      margin: 0;
+    }
+
     .pallet-contents-results {
-        margin-top: 20px;
-        font-size: small;
-        position: relative;
+      margin-top: 20px;
+      font-size: small;
+      position: relative;
     }
+
     .pallet-contents-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
     }
+
     .pallet-contents-header h3 {
-        margin: 0;
+      margin: 0;
     }
-    .pallet-contents-header .close-results-btn { /* Reuse close button style */
-        margin: 0;
+
+    .pallet-contents-header .close-results-btn {
+      margin: 0;
     }
-    .no-items { /* Similar to no-stock */
-        color: #6c757d; /* Use a slightly less alarming color */
-        font-weight: bold;
-        margin-top: 20px;
-        text-align: center;
+
+    .no-items {
+      color: #6c757d;
+      font-weight: bold;
+      margin-top: 20px;
+      text-align: center;
     }
   </style>
 </head>
 
 <div class="split-container">
   <div class="left-column">
-    <div class="form-container">
+    <div class="form-container" id="product-search-container">
       <h2 class="form-title">SEARCH PRODUCT LOCATION</h2>
-      <form method="post" action="{% url 'forms:search_key' %}" id="searchProductForm">
+      <form
+        method="post"
+        action="{% url 'forms:search_key' %}"
+        id="searchProductForm"
+      >
         {% csrf_token %}
         <div class="form-group">
-          <label for="search_product" class="form-label small-text">Search Product*</label>
-          <select id="search_product" name="search_product" class="form-select" required>
+          <label for="search_product" class="form-label small-text"
+            >Search Product*</label
+          >
+          <select
+            id="search_product"
+            name="search_product"
+            class="form-select"
+            required
+          >
             <option value="" selected disabled>Choose a Product</option>
-            <option value="Trolley" {% if product_searched == "Trolley" %}selected{% endif %}>Trolley</option>
-            <option value="Armchair" {% if product_searched == "Armchair" %}selected{% endif %}>Armchair</option>
-            <option value="Pallets" {% if product_searched == "Pallets" %}selected{% endif %}>Pallets</option>
+            <option
+              value="Trolley"
+              {%
+              if
+              product_searched="Trolley"
+              %}selected{%
+              endif
+              %}
+            >
+              Trolley
+            </option>
+            <option
+              value="Armchair"
+              {%
+              if
+              product_searched="Armchair"
+              %}selected{%
+              endif
+              %}
+            >
+              Armchair
+            </option>
+            <option
+              value="Pallets"
+              {%
+              if
+              product_searched="Pallets"
+              %}selected{%
+              endif
+              %}
+            >
+              Pallets
+            </option>
           </select>
         </div>
         <div class="form-group">
-          <label for="search_color" class="form-label small-text">Search Color*</label>
-          <select id="search_color" name="search_color" class="form-select" required>
+          <label for="search_color" class="form-label small-text"
+            >Search Color*</label
+          >
+          <select
+            id="search_color"
+            name="search_color"
+            class="form-select"
+            required
+          >
             <option value="" selected disabled>Choose a Color</option>
-            <option value="green" {% if color_searched == "green" %}selected{% endif %}>Green</option>
-            <option value="black" {% if color_searched == "black" %}selected{% endif %}>Black</option>
-            <option value="orange" {% if color_searched == "orange" %}selected{% endif %}>Orange</option>
+            <option
+              value="green"
+              {%
+              if
+              color_searched="green"
+              %}selected{%
+              endif
+              %}
+            >
+              Green
+            </option>
+            <option
+              value="black"
+              {%
+              if
+              color_searched="black"
+              %}selected{%
+              endif
+              %}
+            >
+              Black
+            </option>
+            <option
+              value="orange"
+              {%
+              if
+              color_searched="orange"
+              %}selected{%
+              endif
+              %}
+            >
+              Orange
+            </option>
           </select>
         </div>
         <div>
-          <button type="submit" class="submit-btn small-text">Search Location</button>
+          <button type="submit" class="submit-btn small-text">
+            Search Location
+          </button>
         </div>
       </form>
 
@@ -216,7 +302,9 @@
       <div class="search-results" id="searchResultsContainer">
         <div class="search-results-header">
           <h3>Product Location Results</h3>
-          <button type="button" id="closeResultsBtn" class="close-results-btn">Close</button>
+          <button type="button" id="closeResultsBtn" class="close-results-btn">
+            Close
+          </button>
         </div>
         {% if search_results %}
         <table class="results-table">
@@ -236,103 +324,137 @@
           </tbody>
         </table>
         {% else %}
-        <p class="no-stock">No stock available for the selected product and color.</p>
+        <p class="no-stock">
+          No stock available for the selected product and color.
+        </p>
         {% endif %}
       </div>
       {% endif %}
+    </div>
 
-      <div class="form-divider"></div> <h2 class="form-title">SEARCH PALLET CONTENTS</h2>
-      <form method="post" action="{% url 'forms:search_pallet' %}" id="searchPalletForm">
+    <div class="form-container" id="pallet-search-container">
+      <h2 class="form-title">SEARCH PALLET CONTENTS</h2>
+      <form
+        method="post"
+        action="{% url 'forms:search_pallet' %}"
+        id="searchPalletForm"
+      >
         {% csrf_token %}
         <div class="form-group">
-            <label for="search_pallet_number" class="form-label small-text">Enter Pallet Number*</label>
-            <input
-                type="text"
-                id="search_pallet_number"
-                name="search_pallet_number"
-                class="form-control" {# Assuming you have a form-control style #}
-                required
-                value="{{ pallet_searched|default:'' }}" {# Retain value if submitted #}
-                placeholder="e.g., A1-01"
-            >
+          <label for="search_pallet_number" class="form-label small-text"
+            >Enter Pallet Number*</label
+          >
+          <input
+            type="text"
+            id="search_pallet_number"
+            name="search_pallet_number"
+            class="form-control"
+            required
+            value="{{ pallet_searched|default:'' }}"
+            placeholder="e.g., A1-01"
+          />
         </div>
-         <div>
-          <button type="submit" class="submit-btn small-text">Search Contents</button>
+        <div>
+          <button type="submit" class="submit-btn small-text">
+            Search Contents
+          </button>
         </div>
       </form>
 
       {% if pallet_contents_results is not None %}
-       <div class="pallet-contents-results" id="palletContentsContainer">
-         <div class="pallet-contents-header">
-           <h3>Contents for Pallet: {{ pallet_searched }}</h3>
-           <button type="button" id="closePalletResultsBtn" class="close-results-btn">Close</button>
-         </div>
-         {% if pallet_contents_results %}
-         <table class="results-table">
-           <thead>
-             <tr>
-               <th>Product</th>
-               <th>Color</th>
-               <th>Quantity</th>
-             </tr>
-           </thead>
-           <tbody>
-             {% for item in pallet_contents_results %}
-             <tr>
-               <td>{{ item.product }}</td>
-               <td>{{ item.color }}</td>
-               <td>{{ item.total_quantity }}</td> {# Use the annotated field name #}
-             </tr>
-             {% endfor %}
-           </tbody>
-         </table>
-         {% else %}
-         <p class="no-items">Pallet is empty or not found.</p>
-         {% endif %}
-       </div>
-       {% endif %}
-
-    </div> {# End form-container #}
-  </div> {# End left-column #}
+      <div class="pallet-contents-results" id="palletContentsContainer">
+        <div class="pallet-contents-header">
+          <h3>Contents for Pallet: {{ pallet_searched }}</h3>
+          <button
+            type="button"
+            id="closePalletResultsBtn"
+            class="close-results-btn"
+          >
+            Close
+          </button>
+        </div>
+        {% if pallet_contents_results %}
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Color</th>
+              <th>Quantity</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in pallet_contents_results %}
+            <tr>
+              <td>{{ item.product }}</td>
+              <td>{{ item.color }}</td>
+              <td>{{ item.total_quantity }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p class="no-items">Pallet is empty or not found.</p>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
 
   <div class="right-column">
     <h2>WAREHOUSE LAYOUTS</h2>
     <div class="warehouse-select-container form-group small-text">
-      <label for="warehouseViewSelect" class="form-label">Select Warehouse View</label>
+      <label for="warehouseViewSelect" class="form-label"
+        >Select Warehouse View</label
+      >
       <select id="warehouseViewSelect" class="form-select">
         <option value="inside" selected>Warehouse Area</option>
         <option value="outside">Warehouse Outside</option>
       </select>
     </div>
     <div class="iframe-container">
-      <iframe id="warehouseInsideFrame" class="modal-iframe" src="{% url 'forms:warehouse_area' %}"></iframe>
-      <iframe id="warehouseOutsideFrame" class="modal-iframe" src="{% url 'forms:warehouse_outside' %}"></iframe>
+      <iframe
+        id="warehouseInsideFrame"
+        class="modal-iframe"
+        src="{% url 'forms:warehouse_area' %}"
+      ></iframe>
+      <iframe
+        id="warehouseOutsideFrame"
+        class="modal-iframe"
+        src="{% url 'forms:warehouse_outside' %}"
+      ></iframe>
     </div>
   </div>
 </div>
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    // --- Warehouse View Switcher ---
+    // Warehouse View Switcher
     const viewSelect = document.getElementById("warehouseViewSelect");
     const insideIframe = document.getElementById("warehouseInsideFrame");
     const outsideIframe = document.getElementById("warehouseOutsideFrame");
 
     function updateIframeView() {
-        if (!viewSelect) return; // Add guard clause
-        const selectedValue = viewSelect.value;
-        if (insideIframe) insideIframe.style.display = selectedValue === "inside" ? "block" : "none";
-        if (outsideIframe) outsideIframe.style.display = selectedValue === "outside" ? "block" : "none";
+      if (!viewSelect) return;
+      const selectedValue = viewSelect.value;
+
+      if (insideIframe)
+        insideIframe.style.display =
+          selectedValue === "inside" ? "block" : "none";
+
+      if (outsideIframe)
+        outsideIframe.style.display =
+          selectedValue === "outside" ? "block" : "none";
     }
 
     if (viewSelect) {
       viewSelect.addEventListener("change", updateIframeView);
     }
-    // updateIframeView(); // Call initially if CSS doesn't cover default state correctly
 
-    // --- Search Results (Product Location) Close Button ---
+    // Search Results (Product Location) Close Button
     const closeProductBtn = document.getElementById("closeResultsBtn");
-    const productResultsContainer = document.getElementById("searchResultsContainer");
+    const productResultsContainer = document.getElementById(
+      "searchResultsContainer"
+    );
 
     if (closeProductBtn && productResultsContainer) {
       closeProductBtn.addEventListener("click", function () {
@@ -340,17 +462,17 @@
       });
     }
 
-    // --- Pallet Contents Results Close Button ---
+    // Pallet Contents Results Close Button
     const closePalletBtn = document.getElementById("closePalletResultsBtn");
-    const palletResultsContainer = document.getElementById("palletContentsContainer");
+    const palletResultsContainer = document.getElementById(
+      "palletContentsContainer"
+    );
 
     if (closePalletBtn && palletResultsContainer) {
-        closePalletBtn.addEventListener("click", function () {
-            palletResultsContainer.style.display = "none";
-        });
+      closePalletBtn.addEventListener("click", function () {
+        palletResultsContainer.style.display = "none";
+      });
     }
-
   });
 </script>
-
 {% endblock %}
