@@ -5,6 +5,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 from .models import FromsStock
+from django.db.models import Sum
 
 # Define the scope and credentials for Google Sheets API
 SCOPE = [
@@ -335,31 +336,71 @@ def warehouse_area(request):
 
 def search_key(request):
     search_results = None
+    product_searched = request.POST.get(
+        "search_product", None
+    )  # Keep track of submitted values
+    color_searched = request.POST.get("search_color", None)
 
-    if request.method == "POST":
+    if (
+        request.method == "POST" and "search_product" in request.POST
+    ):  # Check if product form was submitted
         product = request.POST.get("search_product")
         color = request.POST.get("search_color")
 
-        # Query the database for matching records
-        pallet_records = FromsStock.objects.filter(product=product, color=color)
+        # Query the database for matching records where quantity > 0
+        pallet_records = FromsStock.objects.filter(
+            product=product, color=color, quantity__gt=0
+        )
 
         # Aggregate quantities for the same pallet position
         pallet_data = {}
         for record in pallet_records:
             pallet_code = record.pallet_position
-
-            if pallet_code in pallet_data:
-                # Add to existing quantity for this pallet position
-                pallet_data[pallet_code] += record.quantity
-            else:
-                # Create new entry for this pallet position
-                pallet_data[pallet_code] = record.quantity
+            pallet_data[pallet_code] = pallet_data.get(pallet_code, 0) + record.quantity
 
         # Convert to list of tuples for easier rendering
-        search_results = [
-            (pallet, qty) for pallet, qty in pallet_data.items() if qty > 0
-        ]
+        search_results = list(pallet_data.items())
 
-    return render(
-        request, "search_key/search_key.html", {"search_results": search_results}
-    )
+    context = {
+        "search_results": search_results,
+        "product_searched": product_searched,  # Pass back submitted values
+        "color_searched": color_searched,
+        "pallet_contents_results": None,  # Ensure this is None when handling product search
+        "pallet_searched": None,
+    }
+    return render(request, "search_key/search_key.html", context)
+
+
+def search_pallet(request):
+    pallet_contents_results = None
+    pallet_searched = request.POST.get(
+        "search_pallet_number", None
+    )  # Keep track of submitted value
+
+    if (
+        request.method == "POST" and "search_pallet_number" in request.POST
+    ):  # Check if pallet form was submitted
+        pallet_number = request.POST.get("search_pallet_number")
+
+        # Query the database for items on this pallet with quantity > 0
+        # Group by product and color, and sum the quantity
+        pallet_contents = (
+            FromsStock.objects.filter(pallet_position=pallet_number, quantity__gt=0)
+            .values("product", "color")  # Group by these fields
+            .annotate(total_quantity=Sum("quantity"))  # Sum quantities for each group
+            .order_by("product", "color")
+        )  # Optional ordering
+
+        # pallet_contents will be a list of dictionaries like:
+        # [{'product': 'Trolley', 'color': 'green', 'total_quantity': 50}, ...]
+        pallet_contents_results = list(pallet_contents)
+
+    context = {
+        "search_results": None,  # Ensure this is None when handling pallet search
+        "product_searched": None,
+        "color_searched": None,
+        "pallet_contents_results": pallet_contents_results,
+        "pallet_searched": pallet_searched,  # Pass back submitted pallet number
+    }
+    # Render the SAME template
+    return render(request, "search_key/search_key.html", context)
