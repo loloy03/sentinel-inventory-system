@@ -15,10 +15,12 @@ SCOPE = [
 ]
 CREDENTIALS_FILE = "credentials.json"
 
+
 @login_required
 def dashboard(request):
     """Render the dashboard page"""
     return render(request, "dashboard/dashboard.html")
+
 
 # Create your views here.
 def receive_form(request):
@@ -341,9 +343,8 @@ def warehouse_area(request):
 
 def search_key(request):
     search_results = None
-    product_searched = request.POST.get(
-        "search_product", None
-    )  # Keep track of submitted values
+    total_quantity = 0  # <-- Initialize total quantity
+    product_searched = request.POST.get("search_product", None)
     color_searched = request.POST.get("search_color", None)
 
     if (
@@ -357,9 +358,17 @@ def search_key(request):
             product=product, color=color, quantity__gt=0
         )
 
-        # Aggregate quantities for the same pallet position
+        # --- Calculate Total Quantity ---
+        # Use aggregate to sum the quantity directly from the database query
+        total_aggregate = pallet_records.aggregate(total=Sum("quantity"))
+        total_quantity = (
+            total_aggregate["total"] if total_aggregate["total"] is not None else 0
+        )
+        # --------------------------------
+
+        # Aggregate quantities for the same pallet position (existing logic)
         pallet_data = {}
-        for record in pallet_records:
+        for record in pallet_records:  # Iterate over the already filtered records
             pallet_code = record.pallet_position
             pallet_data[pallet_code] = pallet_data.get(pallet_code, 0) + record.quantity
 
@@ -368,8 +377,9 @@ def search_key(request):
 
     context = {
         "search_results": search_results,
-        "product_searched": product_searched,  # Pass back submitted values
+        "product_searched": product_searched,
         "color_searched": color_searched,
+        "total_quantity": total_quantity,  # <-- Add total quantity to context
         "pallet_contents_results": None,  # Ensure this is None when handling product search
         "pallet_searched": None,
     }
@@ -378,34 +388,28 @@ def search_key(request):
 
 def search_pallet(request):
     pallet_contents_results = None
-    pallet_searched = request.POST.get(
-        "search_pallet_number", None
-    )  # Keep track of submitted value
+    pallet_searched = request.POST.get("search_pallet_number", None)
 
     if (
         request.method == "POST" and "search_pallet_number" in request.POST
     ):  # Check if pallet form was submitted
         pallet_number = request.POST.get("search_pallet_number")
 
-        # Query the database for items on this pallet with quantity > 0
-        # Group by product and color, and sum the quantity
         pallet_contents = (
             FromsStock.objects.filter(pallet_position=pallet_number, quantity__gt=0)
-            .values("product", "color")  # Group by these fields
-            .annotate(total_quantity=Sum("quantity"))  # Sum quantities for each group
+            .values("product", "color")
+            .annotate(total_quantity=Sum("quantity"))
             .order_by("product", "color")
-        )  # Optional ordering
-
-        # pallet_contents will be a list of dictionaries like:
-        # [{'product': 'Trolley', 'color': 'green', 'total_quantity': 50}, ...]
+        )
         pallet_contents_results = list(pallet_contents)
 
     context = {
-        "search_results": None,  # Ensure this is None when handling pallet search
+        "search_results": None,
         "product_searched": None,
         "color_searched": None,
+        "total_quantity": 0,  # <-- Also add here, defaulting to 0 for pallet search context
         "pallet_contents_results": pallet_contents_results,
-        "pallet_searched": pallet_searched,  # Pass back submitted pallet number
+        "pallet_searched": pallet_searched,
     }
     # Render the SAME template
     return render(request, "search_key/search_key.html", context)

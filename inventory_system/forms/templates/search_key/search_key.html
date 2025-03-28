@@ -172,13 +172,31 @@
     /* Default visible iframe (can be changed by JS) */
     /* Style the initially visible iframe to be relative */
     #warehouseInsideFrame {
-       display: block; /* Make this one visible by default */
-       position: relative; /* Override absolute positioning */
+        display: block; /* Make this one visible by default */
+        position: relative; /* Override absolute positioning */
     }
 
     .small-text {
       font-size: small;
     }
+    .total-quantity-display {
+  margin-top: 15px;
+  margin-bottom: 10px;
+  padding: 12px 18px;       /* Slightly more padding */
+  background-color: #e5ffe6; /* Light blue background */
+  border: 1px solid #307634; /* Light blue border */
+  border-left: 5px solid #307634; /* Thicker left border for emphasis */
+  border-radius: 4px;
+  color: #307634;           /* Dark blue text */
+  font-size: medium;
+  text-align: left;
+}
+
+.total-quantity-display strong {
+  font-weight: 700;      /* Bolder number */
+  color: #307634;        /* Even darker blue for number */
+  font-size: 1.15em;     /* Make number more prominent */
+}
   </style>
 </head>
 
@@ -187,70 +205,34 @@
     <div class="left-column">
       <div class="form-container" id="product-search-container">
         <h2 class="form-title">SEARCH PRODUCT LOCATION</h2>
-        <form
-          method="post"
-          action="{% url 'forms:search_key' %}"
-          id="searchProductForm"
-        >
+        <form method="post" action="{% url 'forms:search_key' %}" id="searchProductForm">
           {% csrf_token %}
           <div class="form-group">
-            <label for="search_product" class="form-label small-text"
-              >Search Product*</label
-            >
-            <select
-              id="search_product"
-              name="search_product"
-              class="form-select"
-              required
-            >
+            <label for="search_product" class="form-label small-text">Search Product*</label>
+            <select id="search_product" name="search_product" class="form-select" required>
               <option value="" selected disabled>Choose a Product</option>
-              <option
-                value="Trolley"
-                {% if product_searched == "Trolley" %}selected{% endif %}
-              >
+              <option value="Trolley" {% if product_searched == "Trolley" %}selected{% endif %}>
                 Trolley
               </option>
-              <option
-                value="Armchair"
-                {% if product_searched == "Armchair" %}selected{% endif %}
-              >
+              <option value="Armchair" {% if product_searched == "Armchair" %}selected{% endif %}>
                 Armchair
               </option>
-              <option
-                value="Pallets"
-                {% if product_searched == "Pallets" %}selected{% endif %}
-              >
+              <option value="Pallets" {% if product_searched == "Pallets" %}selected{% endif %}>
                 Pallets
               </option>
             </select>
           </div>
           <div class="form-group">
-            <label for="search_color" class="form-label small-text"
-              >Search Color*</label
-            >
-            <select
-              id="search_color"
-              name="search_color"
-              class="form-select"
-              required
-            >
+            <label for="search_color" class="form-label small-text">Search Color*</label>
+            <select id="search_color" name="search_color" class="form-select" required>
               <option value="" selected disabled>Choose a Color</option>
-              <option
-                value="green"
-                {% if color_searched == "green" %}selected{% endif %}
-              >
+              <option value="green" {% if color_searched == "green" %}selected{% endif %}>
                 Green
               </option>
-              <option
-                value="black"
-                {% if color_searched == "black" %}selected{% endif %}
-              >
+              <option value="black" {% if color_searched == "black" %}selected{% endif %}>
                 Black
               </option>
-              <option
-                value="orange"
-                {% if color_searched == "orange" %}selected{% endif %}
-              >
+              <option value="orange" {% if color_searched == "orange" %}selected{% endif %}>
                 Orange
               </option>
             </select>
@@ -271,43 +253,39 @@
             </button>
           </div>
           {% if search_results %}
-          <table class="results-table">
-            <thead>
-              <tr>
-                <th>Pallet Number</th>
-                <th>Quantity</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for pallet, quantity in search_results %}
-              <tr>
-                <td>{{ pallet }}</td>
-                <td>{{ quantity }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+            <p class="total-quantity-display">
+              Pallet Balance: <strong>{{ total_quantity }}</strong>
+            </p>
+            <table class="results-table">
+              <thead>
+                <tr>
+                  <th>Pallet Number</th>
+                  <th>Quantity</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for pallet, quantity in search_results %}
+                <tr>
+                  <td>{{ pallet }}</td>
+                  <td>{{ quantity }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
           {% else %}
-          <p class="no-stock">
-            No stock available for the selected product and color.
-          </p>
+            <p class="no-stock">
+              No stock available for the selected product and color.
+            </p>
           {% endif %}
         </div>
         {% endif %}
-      </div>
-
+        </div>
       <div class="form-container" id="pallet-search-container">
         <h2 class="form-title">SEARCH PALLET CONTENTS</h2>
-        <form
-          method="post"
-          action="{% url 'forms:search_pallet' %}"
-          id="searchPalletForm"
-        >
+        <form method="post" action="{% url 'forms:search_pallet' %}" id="searchPalletForm">
           {% csrf_token %}
           <div class="form-group">
-            <label for="search_pallet_number" class="form-label small-text"
-              >Enter Pallet Number*</label
-            >
+            <label for="search_pallet_number" class="form-label small-text">Enter Pallet Number*</label>
             <input
               type="text"
               id="search_pallet_number"
@@ -329,49 +307,43 @@
         <div class="pallet-contents-results" id="palletContentsContainer">
           <div class="pallet-contents-header">
             <h3>Contents for Pallet: {{ pallet_searched }}</h3>
-            <button
-              type="button"
-              id="closePalletResultsBtn"
-              class="close-results-btn"
-            >
+            <button type="button" id="closePalletResultsBtn" class="close-results-btn">
               Close
             </button>
           </div>
           {% if pallet_contents_results %}
-          <table class="results-table">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Color</th>
-                <th>Quantity</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for item in pallet_contents_results %}
-              <tr>
-                <td>{{ item.product }}</td>
-                <td>{{ item.color }}</td>
-                <td>{{ item.total_quantity }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+            <table class="results-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Color</th>
+                  <th>Quantity</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in pallet_contents_results %}
+                <tr>
+                  <td>{{ item.product }}</td>
+                  <td>{{ item.color }}</td>
+                  <td>{{ item.total_quantity }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
           {% else %}
-          <p class="no-items">
-            Pallet {{ pallet_searched }} is empty or not found.
-          </p>
+            <p class="no-items">
+              Pallet {{ pallet_searched }} is empty or not found.
+            </p>
           {% endif %}
         </div>
         {% endif %}
+        </div>
       </div>
-    </div>
 
     <div class="right-column">
       <h2 class="form-title">WAREHOUSE LAYOUTS</h2>
       <div class="warehouse-select-container form-group small-text">
-        <label for="warehouseViewSelect" class="form-label"
-          >Select Warehouse View</label
-        >
+        <label for="warehouseViewSelect" class="form-label">Select Warehouse View</label>
         <select id="warehouseViewSelect" class="form-select">
           <option value="inside" selected>Warehouse Area (Inside)</option>
           <option value="outside">Warehouse Outside</option>
@@ -392,7 +364,7 @@
         ></iframe>
       </div>
     </div>
-  </div>
+    </div>
 
   <script>
     document.addEventListener("DOMContentLoaded", function () {
@@ -407,15 +379,15 @@
 
         // Ensure iframes exist before trying to style them
         if (insideIframe) {
-             insideIframe.style.display = selectedValue === "inside" ? "block" : "none";
-             // Ensure correct positioning is reapplied if needed
-             insideIframe.style.position = selectedValue === "inside" ? "relative" : "absolute";
+            insideIframe.style.display = selectedValue === "inside" ? "block" : "none";
+            // Ensure correct positioning is reapplied if needed
+            insideIframe.style.position = selectedValue === "inside" ? "relative" : "absolute";
         }
 
         if (outsideIframe){
             outsideIframe.style.display = selectedValue === "outside" ? "block" : "none";
-             // Ensure correct positioning is reapplied if needed
-             outsideIframe.style.position = selectedValue === "outside" ? "relative" : "absolute";
+            // Ensure correct positioning is reapplied if needed
+            outsideIframe.style.position = selectedValue === "outside" ? "relative" : "absolute";
         }
       }
 
@@ -456,8 +428,8 @@
           // Optional: Add origin check for security in production
           // const expectedOrigin = "http://yourdomain.com"; // Or use window.location.origin if they are the same
           // if (event.origin !== expectedOrigin) {
-          //   console.warn("Message received from unexpected origin:", event.origin);
-          //   return;
+          //    console.warn("Message received from unexpected origin:", event.origin);
+          //    return;
           // }
 
           if (event.data && event.data.type === "palletSelected") {
