@@ -40,8 +40,26 @@
     }
     .search-results {
       margin-top: 20px;
-      text-align: center;
+      /* Removed text-align: center; to allow button alignment */
       font-size: small;
+      position: relative; /* Added for potential absolute positioning of close button if needed */
+    }
+    /* Style for the close button */
+    .close-results-btn {
+      /* Basic styling - adjust as needed */
+      padding: 4px 8px;
+      margin-left: 10px; /* Space from the title */
+      margin-bottom: 10px; /* Space below button/title */
+      cursor: pointer;
+      background-color: #e7e7e7;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: x-small; /* Make button text smaller */
+      /* Optional: Position top-right
+      position: absolute;
+      top: 0;
+      right: 0;
+      */
     }
     .results-table {
       width: 100%;
@@ -62,6 +80,7 @@
       color: red;
       font-weight: bold;
       margin-top: 20px;
+      text-align: center; /* Center the 'no stock' message */
     }
 
     /* --- Right column adjustments --- */
@@ -118,6 +137,19 @@
     .small-text {
       font-size: small;
     }
+    /* Align heading and button */
+    .search-results-header {
+      display: flex;
+      justify-content: space-between; /* Pushes title left, button right */
+      align-items: center; /* Vertically aligns title and button */
+      margin-bottom: 10px; /* Space below header */
+    }
+    .search-results-header h3 {
+      margin: 0; /* Remove default margin from h3 */
+    }
+    .search-results-header .close-results-btn {
+      margin: 0; /* Remove default margin from button */
+    }
   </style>
 </head>
 
@@ -163,9 +195,16 @@
           <button type="submit" class="submit-btn small-text">Search</button>
         </div>
       </form>
+
       {% if search_results is not None %}
-      <div class="search-results">
-        <h3>Search Results</h3>
+      <div class="search-results" id="searchResultsContainer">
+        <div class="search-results-header">
+          <h3>Searched Results</h3>
+          <button type="button" id="closeResultsBtn" class="close-results-btn">
+            Close
+          </button>
+        </div>
+
         {% if search_results %}
         <table class="results-table">
           <thead>
@@ -222,32 +261,38 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    // Get references to elements
+    // --- Warehouse View Switcher ---
     const viewSelect = document.getElementById("warehouseViewSelect");
     const insideIframe = document.getElementById("warehouseInsideFrame");
     const outsideIframe = document.getElementById("warehouseOutsideFrame");
 
-    // Function to update iframe visibility based on selection
     function updateIframeView() {
       const selectedValue = viewSelect.value;
-
-      if (selectedValue === "inside") {
-        insideIframe.style.display = "block";
-        outsideIframe.style.display = "none";
-      } else if (selectedValue === "outside") {
-        insideIframe.style.display = "none";
-        outsideIframe.style.display = "block";
-      }
+      insideIframe.style.display =
+        selectedValue === "inside" ? "block" : "none";
+      outsideIframe.style.display =
+        selectedValue === "outside" ? "block" : "none";
     }
 
-    // Add event listener for dropdown changes
-    viewSelect.addEventListener("change", updateIframeView);
+    if (viewSelect) {
+      // Check if element exists before adding listener
+      viewSelect.addEventListener("change", updateIframeView);
+    }
+    // Initial setup handled by CSS
 
-    // Initial setup - ensure the correct iframe is visible on load
-    // (The CSS now handles the initial display of 'warehouseInsideFrame')
-    // updateIframeView(); // You could call this, but CSS rule is cleaner for initial state
+    // --- Search Results Close Button ---
+    const closeButton = document.getElementById("closeResultsBtn");
+    const resultsContainer = document.getElementById("searchResultsContainer");
 
-    // --- Keep Search Form related JS if any ---
+    // Check if both the button and container exist before adding the listener
+    // This prevents errors if the search results aren't initially shown
+    if (closeButton && resultsContainer) {
+      closeButton.addEventListener("click", function () {
+        resultsContainer.style.display = "none"; // Hide the results container
+      });
+    }
+
+    // --- Keep other Search Form related JS if any ---
     // ...
   });
 </script>
