@@ -1,459 +1,433 @@
-{% extends "base.html" %} {% block content %} {% load static %}
+{% extends "base.html" %}
+{% load static %}
 
+{% block content %}
 <head>
-  <link rel="stylesheet" href="{% static 'css/forms_styles.css' %}" />
-  <style>
-    html,
-    body {
-      /* height: 100%; */ /* Removed */
-      margin: 0;
-      font-family: "Poppins", sans-serif;
-    }
+    <link rel="stylesheet" href="{% static 'css/forms_styles.css' %}" />
+    <style>
+        html,
+        body {
+            margin: 0;
+            font-family: "Poppins", sans-serif;
+        }
 
-    .split-container {
-      display: flex;
-      gap: 20px;
-      padding: 20px;
-      background-color: #f8f9fa;
-      /* height: 100vh; */ /* REMOVED - Allow container to grow with content */
-      min-height: calc(
-        100vh - 40px
-      ); /* Optional: Ensure it's at least viewport height minus padding */
-      box-sizing: border-box;
-      /* Add align-items: flex-start if you DON'T want columns to stretch to the same height */
-      align-items: stretch; /* Default, makes columns same height */
-    }
+        .split-container {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            min-height: calc(100vh - 40px);
+            box-sizing: border-box;
+            align-items: stretch;
+        }
 
-    .left-column {
-      flex: 1;
-      /* overflow-y: auto; */ /* REMOVED - Prevent internal scrolling */
-      /* Add padding to prevent scrollbar overlap */
-      /* padding-right: 5px; */ /* REMOVED - No longer needed */
-      display: flex; /* Optional: Helps manage child margins */
-      flex-direction: column; /* Optional: Stack children vertically */
-      gap: 20px; /* Optional: Consistent spacing between form containers */
-    }
+        .left-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
 
-    .right-column {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      background-color: #ffffff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      overflow: hidden; /* Keep this to contain iframe */
-      /* No explicit height needed, will stretch due to align-items: stretch */
-    }
+        .right-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
 
-    .left-column .form-container {
-      padding: 30px;
-      background-color: #ffffff;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      margin: 0; /* Reset margin, rely on gap in parent */
-    }
+        .left-column .form-container {
+            padding: 30px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin: 0;
+        }
 
-    /* Removed the rule for margin between form containers */
-    /* .left-column .form-container + .form-container {
-        margin-top: 20px;
-      } */
+        .search-results,
+        .pallet-contents-results {
+            margin-top: 20px;
+            font-size: small;
+            position: relative;
+        }
 
-    .search-results,
-    .pallet-contents-results {
-      margin-top: 20px; /* Keep or adjust if needed */
-      font-size: small;
-      position: relative; /* Needed for absolute positioning of close button if desired */
-    }
+        .search-results-header,
+        .pallet-contents-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
 
-    .search-results-header,
-    .pallet-contents-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
+        .search-results-header h3,
+        .pallet-contents-header h3 {
+            margin: 0;
+            font-size: 1.1em;
+        }
 
-    .search-results-header h3,
-    .pallet-contents-header h3 {
-      margin: 0;
-      font-size: 1.1em; /* Slightly larger header for results */
-    }
+        .close-results-btn {
+            padding: 4px 8px;
+            cursor: pointer;
+            background-color: #e7e7e7;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: x-small;
+        }
 
-    .close-results-btn {
-      padding: 4px 8px;
-      cursor: pointer;
-      background-color: #e7e7e7;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: x-small;
-    }
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
 
-    .results-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
+        .results-table th,
+        .results-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
 
-    .results-table th,
-    .results-table td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: center;
-    }
+        .results-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
 
-    .results-table th {
-      background-color: #f2f2f2;
-      font-weight: bold;
-    }
+        .no-stock,
+        .no-items {
+            color: #6c757d;
+            font-weight: normal;
+            margin-top: 20px;
+            text-align: center;
+            font-style: italic;
+        }
 
-    .no-stock,
-    .no-items {
-      color: #6c757d;
-      font-weight: normal;
-      margin-top: 20px;
-      text-align: center;
-      font-style: italic;
-    }
+        .right-column h2 {
+            margin-bottom: 15px;
+            font-weight: 500;
+            color: #333;
+            flex-shrink: 0;
+        }
 
-    .right-column h2 {
-      margin-bottom: 15px;
-      font-weight: 500;
-      color: #333;
-      flex-shrink: 0; /* Prevent shrinking */
-    }
+        .right-column .warehouse-select-container {
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
 
-    .right-column .warehouse-select-container {
-      margin-bottom: 15px;
-      flex-shrink: 0; /* Prevent shrinking */
-    }
+        .right-column .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #333;
+            font-weight: 400;
+        }
 
-    .right-column .form-label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 14px;
-      color: #333;
-      font-weight: 400;
-    }
+        .right-column .form-select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23333%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 12px;
+            font-family: "Poppins", sans-serif;
+        }
 
-    .right-column .form-select {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ced4da;
-      border-radius: 4px;
-      font-size: 14px;
-      appearance: none;
-      background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23333%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-      background-repeat: no-repeat;
-      background-position: right 10px center;
-      background-size: 12px;
-      font-family: "Poppins", sans-serif;
-    }
+        .right-column .iframe-container {
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            min-height: 400px;
+        }
 
-    .right-column .iframe-container {
-      flex-grow: 1; /* Allows iframe to fill vertical space */
-      position: relative;
-      overflow: hidden; /* Crucial: Ensures iframe content doesn't overflow the container */
-      border: 1px solid #dee2e6; /* Add a subtle border */
-      border-radius: 4px;
-      min-height: 400px; /* Example minimum height, adjust as needed */
-    }
+        .right-column .modal-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
 
-    .right-column .modal-iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      display: none; /* Initially hide all */
-      position: absolute; /* Position absolutely within the container */
-      top: 0;
-      left: 0;
-    }
+        #warehouseInsideFrame {
+            display: block;
+            position: relative;
+        }
 
-    /* Default visible iframe (can be changed by JS) */
-    /* Style the initially visible iframe to be relative */
-    #warehouseInsideFrame {
-        display: block; /* Make this one visible by default */
-        position: relative; /* Override absolute positioning */
-    }
+        .small-text {
+            font-size: small;
+        }
 
-    .small-text {
-      font-size: small;
-    }
-    .total-quantity-display {
-  margin-top: 15px;
-  margin-bottom: 10px;
-  padding: 12px 18px;       /* Slightly more padding */
-  background-color: #e5ffe6; /* Light blue background */
-  border: 1px solid #307634; /* Light blue border */
-  border-left: 5px solid #307634; /* Thicker left border for emphasis */
-  border-radius: 4px;
-  color: #307634;           /* Dark blue text */
-  font-size: medium;
-  text-align: left;
-}
+        .total-quantity-display {
+            margin-top: 15px;
+            margin-bottom: 10px;
+            padding: 12px 18px;
+            background-color: #e5ffe6;
+            border: 1px solid #307634;
+            border-left: 5px solid #307634;
+            border-radius: 4px;
+            color: #307634;
+            font-size: medium;
+            text-align: left;
+        }
 
-.total-quantity-display strong {
-  font-weight: 700;      /* Bolder number */
-  color: #307634;        /* Even darker blue for number */
-  font-size: 1.15em;     /* Make number more prominent */
-}
-  </style>
+        .total-quantity-display strong {
+            font-weight: 700;
+            color: #307634;
+            font-size: 1.15em;
+        }
+    </style>
 </head>
 
 <body>
-  <div class="split-container">
-    <div class="left-column">
-      <div class="form-container" id="product-search-container">
-        <h2 class="form-title">SEARCH PRODUCT LOCATION</h2>
-        <form method="post" action="{% url 'forms:search_key' %}" id="searchProductForm">
-          {% csrf_token %}
-          <div class="form-group">
-            <label for="search_product" class="form-label small-text">Search Product*</label>
-            <select id="search_product" name="search_product" class="form-select" required>
-              <option value="" selected disabled>Choose a Product</option>
-              <option value="Trolley" {% if product_searched == "Trolley" %}selected{% endif %}>
-                Trolley
-              </option>
-              <option value="Armchair" {% if product_searched == "Armchair" %}selected{% endif %}>
-                Armchair
-              </option>
-              <option value="Pallets" {% if product_searched == "Pallets" %}selected{% endif %}>
-                Pallets
-              </option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="search_color" class="form-label small-text">Search Color*</label>
-            <select id="search_color" name="search_color" class="form-select" required>
-              <option value="" selected disabled>Choose a Color</option>
-              <option value="green" {% if color_searched == "green" %}selected{% endif %}>
-                Green
-              </option>
-              <option value="black" {% if color_searched == "black" %}selected{% endif %}>
-                Black
-              </option>
-              <option value="orange" {% if color_searched == "orange" %}selected{% endif %}>
-                Orange
-              </option>
-            </select>
-          </div>
-          <div>
-            <button type="submit" class="submit-btn small-text">
-              Search Location
-            </button>
-          </div>
-        </form>
+    <div class="split-container">
+        <div class="left-column">
+            <div class="form-container" id="product-search-container">
+                <h2 class="form-title">SEARCH PRODUCT LOCATION</h2>
+                <form method="post" action="{% url 'forms:search_key' %}" id="searchProductForm">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="search_product" class="form-label small-text">Search Product*</label>
+                        <select id="search_product" name="search_product" class="form-select" required>
+                            <option value="" selected disabled>Choose a Product</option>
+                            <option value="Trolley" {% if product_searched == "Trolley" %}selected{% endif %}>
+                                Trolley
+                            </option>
+                            <option value="Armchair" {% if product_searched == "Armchair" %}selected{% endif %}>
+                                Armchair
+                            </option>
+                            <option value="Pallets" {% if product_searched == "Pallets" %}selected{% endif %}>
+                                Pallets
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="search_color" class="form-label small-text">Search Color*</label>
+                        <select id="search_color" name="search_color" class="form-select" required>
+                            <option value="" selected disabled>Choose a Color</option>
+                            <option value="green" {% if color_searched == "green" %}selected{% endif %}>
+                                Green
+                            </option>
+                            <option value="black" {% if color_searched == "black" %}selected{% endif %}>
+                                Black
+                            </option>
+                            <option value="orange" {% if color_searched == "orange" %}selected{% endif %}>
+                                Orange
+                            </option>
+                        </select>
+                    </div>
+                    <div>
+                        <button type="submit" class="submit-btn small-text">
+                            Search Location
+                        </button>
+                    </div>
+                </form>
 
-        {% if search_results is not None %}
-        <div class="search-results" id="searchResultsContainer">
-          <div class="search-results-header">
-            <h3>Product Location Results</h3>
-            <button type="button" id="closeResultsBtn" class="close-results-btn">
-              Close
-            </button>
-          </div>
-          {% if search_results %}
-            <p class="total-quantity-display">
-              Pallet Balance: <strong>{{ total_quantity }}</strong>
-            </p>
-            <table class="results-table">
-              <thead>
-                <tr>
-                  <th>Pallet Number</th>
-                  <th>Quantity</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for pallet, quantity in search_results %}
-                <tr>
-                  <td>{{ pallet }}</td>
-                  <td>{{ quantity }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          {% else %}
-            <p class="no-stock">
-              No stock available for the selected product and color.
-            </p>
-          {% endif %}
-        </div>
-        {% endif %}
-        </div>
-      <div class="form-container" id="pallet-search-container">
-        <h2 class="form-title">SEARCH PALLET CONTENTS</h2>
-        <form method="post" action="{% url 'forms:search_pallet' %}" id="searchPalletForm">
-          {% csrf_token %}
-          <div class="form-group">
-            <label for="search_pallet_number" class="form-label small-text">Enter Pallet Number*</label>
-            <input
-              type="text"
-              id="search_pallet_number"
-              name="search_pallet_number"
-              class="form-control"
-              required
-              value="{{ pallet_searched|default:'' }}"
-              placeholder="e.g., P0123 or click map"
-            />
-          </div>
-          <div>
-            <button type="submit" class="submit-btn small-text">
-              Search Contents
-            </button>
-          </div>
-        </form>
+                {% if search_results is not None %}
+                <div class="search-results" id="searchResultsContainer">
+                    <div class="search-results-header">
+                        <h3>Product Location Results</h3>
+                        <button type="button" id="closeResultsBtn" class="close-results-btn">
+                            Close
+                        </button>
+                    </div>
+                    {% if search_results %}
+                        <p class="total-quantity-display">
+                            Pallet Balance: <strong>{{ total_quantity }}</strong>
+                        </p>
+                        <table class="results-table">
+                            <thead>
+                                <tr>
+                                    <th>Pallet Number</th>
+                                    <th>Quantity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pallet, quantity in search_results %}
+                                <tr>
+                                    <td>{{ pallet }}</td>
+                                    <td>{{ quantity }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p class="no-stock">
+                            No stock available for the selected product and color.
+                        </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="form-container" id="pallet-search-container">
+                <h2 class="form-title">SEARCH PALLET CONTENTS</h2>
+                <form method="post" action="{% url 'forms:search_pallet' %}" id="searchPalletForm">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="search_pallet_number" class="form-label small-text">Enter Pallet Number*</label>
+                        <input
+                            type="text"
+                            id="search_pallet_number"
+                            name="search_pallet_number"
+                            class="form-control"
+                            required
+                            value="{{ pallet_searched|default:'' }}"
+                            placeholder="e.g., P0123 or click map"
+                        />
+                    </div>
+                    <div>
+                        <button type="submit" class="submit-btn small-text">
+                            Search Contents
+                        </button>
+                    </div>
+                </form>
 
-        {% if pallet_contents_results is not None %}
-        <div class="pallet-contents-results" id="palletContentsContainer">
-          <div class="pallet-contents-header">
-            <h3>Contents for Pallet: {{ pallet_searched }}</h3>
-            <button type="button" id="closePalletResultsBtn" class="close-results-btn">
-              Close
-            </button>
-          </div>
-          {% if pallet_contents_results %}
-            <table class="results-table">
-              <thead>
-                <tr>
-                  <th>Product</th>
-                  <th>Color</th>
-                  <th>Quantity</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for item in pallet_contents_results %}
-                <tr>
-                  <td>{{ item.product }}</td>
-                  <td>{{ item.color }}</td>
-                  <td>{{ item.total_quantity }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          {% else %}
-            <p class="no-items">
-              Pallet {{ pallet_searched }} is empty or not found.
-            </p>
-          {% endif %}
+                {% if pallet_contents_results is not None %}
+                <div class="pallet-contents-results" id="palletContentsContainer">
+                    <div class="pallet-contents-header">
+                        <h3>Contents for Pallet: {{ pallet_searched }}</h3>
+                        <button type="button" id="closePalletResultsBtn" class="close-results-btn">
+                            Close
+                        </button>
+                    </div>
+                    {% if pallet_contents_results %}
+                        <table class="results-table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Color</th>
+                                    <th>Quantity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in pallet_contents_results %}
+                                <tr>
+                                    <td>{{ item.product }}</td>
+                                    <td>{{ item.color }}</td>
+                                    <td>{{ item.total_quantity }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p class="no-items">
+                            Pallet {{ pallet_searched }} is empty or not found.
+                        </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
         </div>
-        {% endif %}
+        <div class="right-column">
+            <h2 class="form-title">WAREHOUSE LAYOUTS</h2>
+            <div class="warehouse-select-container form-group small-text">
+                <label for="warehouseViewSelect" class="form-label">Select Warehouse View</label>
+                <select id="warehouseViewSelect" class="form-select">
+                    <option value="inside" selected>Warehouse Area (Inside)</option>
+                    <option value="outside">Warehouse Outside</option>
+                </select>
+            </div>
+            <div class="iframe-container">
+                <iframe
+                    id="warehouseInsideFrame"
+                    class="modal-iframe"
+                    src="{% url 'forms:warehouse_area' %}"
+                    title="Warehouse Area Layout"
+                ></iframe>
+                <iframe
+                    id="warehouseOutsideFrame"
+                    class="modal-iframe"
+                    src="{% url 'forms:warehouse_outside' %}"
+                    title="Warehouse Outside Layout"
+                ></iframe>
+            </div>
         </div>
-      </div>
-
-    <div class="right-column">
-      <h2 class="form-title">WAREHOUSE LAYOUTS</h2>
-      <div class="warehouse-select-container form-group small-text">
-        <label for="warehouseViewSelect" class="form-label">Select Warehouse View</label>
-        <select id="warehouseViewSelect" class="form-select">
-          <option value="inside" selected>Warehouse Area (Inside)</option>
-          <option value="outside">Warehouse Outside</option>
-        </select>
-      </div>
-      <div class="iframe-container">
-        <iframe
-          id="warehouseInsideFrame"
-          class="modal-iframe"
-          src="{% url 'forms:warehouse_area' %}"
-          title="Warehouse Area Layout"
-        ></iframe>
-        <iframe
-          id="warehouseOutsideFrame"
-          class="modal-iframe"
-          src="{% url 'forms:warehouse_outside' %}"
-          title="Warehouse Outside Layout"
-        ></iframe>
-      </div>
     </div>
-    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // --- Warehouse View Switcher ---
+            const viewSelect = document.getElementById("warehouseViewSelect");
+            const insideIframe = document.getElementById("warehouseInsideFrame");
+            const outsideIframe = document.getElementById("warehouseOutsideFrame");
 
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      // --- Warehouse View Switcher ---
-      const viewSelect = document.getElementById("warehouseViewSelect");
-      const insideIframe = document.getElementById("warehouseInsideFrame");
-      const outsideIframe = document.getElementById("warehouseOutsideFrame");
+            function updateIframeView() {
+                if (!viewSelect) return;
+                const selectedValue = viewSelect.value;
 
-      function updateIframeView() {
-        if (!viewSelect) return;
-        const selectedValue = viewSelect.value;
+                // Ensure iframes exist before trying to style them
+                if (insideIframe) {
+                    insideIframe.style.display = selectedValue === "inside" ? "block" : "none";
+                    // Ensure correct positioning is reapplied
+                    insideIframe.style.position = selectedValue === "inside" ? "relative" : "absolute";
+                }
 
-        // Ensure iframes exist before trying to style them
-        if (insideIframe) {
-            insideIframe.style.display = selectedValue === "inside" ? "block" : "none";
-            // Ensure correct positioning is reapplied if needed
-            insideIframe.style.position = selectedValue === "inside" ? "relative" : "absolute";
-        }
-
-        if (outsideIframe){
-            outsideIframe.style.display = selectedValue === "outside" ? "block" : "none";
-            // Ensure correct positioning is reapplied if needed
-            outsideIframe.style.position = selectedValue === "outside" ? "relative" : "absolute";
-        }
-      }
-
-      if (viewSelect) {
-        viewSelect.addEventListener("change", updateIframeView);
-        // Initial call to set the correct view on load
-        updateIframeView();
-      }
-
-      // --- Search Results (Product Location) Close Button ---
-      const closeProductBtn = document.getElementById("closeResultsBtn");
-      const productResultsContainer = document.getElementById(
-        "searchResultsContainer"
-      );
-
-      if (closeProductBtn && productResultsContainer) {
-        closeProductBtn.addEventListener("click", function () {
-          productResultsContainer.style.display = "none";
-        });
-      }
-
-      // --- Pallet Contents Results Close Button ---
-      const closePalletBtn = document.getElementById("closePalletResultsBtn");
-      const palletResultsContainer = document.getElementById(
-        "palletContentsContainer"
-      );
-
-      if (closePalletBtn && palletResultsContainer) {
-        closePalletBtn.addEventListener("click", function () {
-          palletResultsContainer.style.display = "none";
-        });
-      }
-
-      // --- ***** IFRAME MESSAGE LISTENER ***** ---
-      window.addEventListener(
-        "message",
-        function (event) {
-          // Optional: Add origin check for security in production
-          // const expectedOrigin = "http://yourdomain.com"; // Or use window.location.origin if they are the same
-          // if (event.origin !== expectedOrigin) {
-          //    console.warn("Message received from unexpected origin:", event.origin);
-          //    return;
-          // }
-
-          if (event.data && event.data.type === "palletSelected") {
-            const palletCode = event.data.palletCode;
-            console.log("Pallet selected from iframe:", palletCode); // Debug log
-
-            const palletInput = document.getElementById("search_pallet_number");
-            const palletForm = document.getElementById("searchPalletForm");
-
-            if (palletInput && palletForm) {
-              // 1. Update the input field value
-              palletInput.value = palletCode;
-
-              // 2. Submit the pallet search form programmatically
-              palletForm.submit();
-            } else {
-              console.error("Pallet search input or form not found!");
+                if (outsideIframe) {
+                    outsideIframe.style.display = selectedValue === "outside" ? "block" : "none";
+                    // Ensure correct positioning is reapplied
+                    outsideIframe.style.position = selectedValue === "outside" ? "relative" : "absolute";
+                }
             }
-          }
-        },
-        false
-      );
-      // --- ***** END IFRAME MESSAGE LISTENER ***** ---
-    });
-  </script>
+
+            if (viewSelect) {
+                viewSelect.addEventListener("change", updateIframeView);
+                // Initial call to set the correct view on load
+                updateIframeView();
+            }
+
+            // --- Search Results (Product Location) Close Button ---
+            const closeProductBtn = document.getElementById("closeResultsBtn");
+            const productResultsContainer = document.getElementById("searchResultsContainer");
+
+            if (closeProductBtn && productResultsContainer) {
+                closeProductBtn.addEventListener("click", function () {
+                    productResultsContainer.style.display = "none";
+                });
+            }
+
+            // --- Pallet Contents Results Close Button ---
+            const closePalletBtn = document.getElementById("closePalletResultsBtn");
+            const palletResultsContainer = document.getElementById("palletContentsContainer");
+
+            if (closePalletBtn && palletResultsContainer) {
+                closePalletBtn.addEventListener("click", function () {
+                    palletResultsContainer.style.display = "none";
+                });
+            }
+
+            // --- ***** IFRAME MESSAGE LISTENER ***** ---
+            window.addEventListener(
+                "message",
+                function (event) {
+                    if (event.data && event.data.type === "palletSelected") {
+                        const palletCode = event.data.palletCode;
+                        console.log("Pallet selected from iframe:", palletCode); // Debug log
+
+                        const palletInput = document.getElementById("search_pallet_number");
+                        const palletForm = document.getElementById("searchPalletForm");
+
+                        if (palletInput && palletForm) {
+                            // 1. Update the input field value
+                            palletInput.value = palletCode;
+
+                            // 2. Submit the pallet search form programmatically
+                            palletForm.submit();
+                        } else {
+                            console.error("Pallet search input or form not found!");
+                        }
+                    }
+                },
+                false
+            );
+            // --- ***** END IFRAME MESSAGE LISTENER ***** ---
+        });
+    </script>
 </body>
 {% endblock %}
