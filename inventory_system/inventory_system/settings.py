@@ -30,7 +30,7 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
-LOGIN_REDIRECT_URL = 'account:dashboard'
+LOGIN_REDIRECT_URL = 'forms:dashboard'
 LOGIN_URL = 'login'
 LOGOUT_REDIRECT_URL = 'login'
 

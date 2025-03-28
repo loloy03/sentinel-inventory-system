@@ -10,4 +10,5 @@ urlpatterns = [
     path("warehouse/area/", views.warehouse_area, name="warehouse_area"),
     path("search/key", views.search_key, name="search_key"),
     path("search/pallet/", views.search_pallet, name="search_pallet"),
+    path("dashboard/", views.dashboard, name="dashboard"),
 ]

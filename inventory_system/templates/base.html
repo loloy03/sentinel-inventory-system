@@ -192,7 +192,7 @@
         <nav id="navbar" class="text-small">
           <ul>
             {% if user.is_authenticated %}
-            <li><a href="{% url 'account:dashboard' %}">Dashboard</a></li>
+            <li><a href="{% url 'forms:dashboard' %}">Dashboard</a></li>
             <li>
               <a href="{% url 'forms:receive_form' %}"
                 >Receiving Inventory</a

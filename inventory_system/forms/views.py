@@ -6,6 +6,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 from .models import FromsStock
 from django.db.models import Sum
+from django.contrib.auth.decorators import login_required
 
 # Define the scope and credentials for Google Sheets API
 SCOPE = [
@@ -14,6 +15,10 @@ SCOPE = [
 ]
 CREDENTIALS_FILE = "credentials.json"
 
+@login_required
+def dashboard(request):
+    """Render the dashboard page"""
+    return render(request, "dashboard/dashboard.html")
 
 # Create your views here.
 def receive_form(request):

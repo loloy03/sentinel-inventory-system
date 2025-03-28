@@ -1,29 +1,32 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login
-from django.contrib.auth.forms import AuthenticationForm
+from django.urls import reverse # Can be used with redirect: redirect(reverse('...'))
 
-# Add this new import for your custom form
-# You'll need to create forms.py with CustomLoginForm as we discussed
+# Assuming forms.py has CustomLoginForm, likely inheriting from AuthenticationForm
 from .forms import CustomLoginForm
 
-# Create your views here.
-@login_required
-def dashboard(request):
-    return render(request, 'account/dashboard.html')
-
-# Add this new login view
 def login_view(request):
+    if request.user.is_authenticated:
+        # Ensure 'forms:dashboard' is the correct URL name for your dashboard
+        return redirect('forms:dashboard')
+
     if request.method == 'POST':
         form = CustomLoginForm(request, data=request.POST)
         if form.is_valid():
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password')
-            user = authenticate(username=username, password=password)
-            if user is not None:
-                login(request, user)
-                return redirect('dashboard')  # Redirect to dashboard after login
-    else:
-        form = CustomLoginForm()
-    
+            # This assumes CustomLoginForm inherits AuthenticationForm
+            user = form.get_user()
+            login(request, user)
+             # Ensure 'forms:dashboard' is the correct URL name
+            return redirect('forms:dashboard')
+    else: # GET request
+        form = CustomLoginForm(request=request) # Pass request if form needs it
+
     return render(request, 'account/login.html', {'form': form})
+
+# A separate dashboard view would typically look like this:
+# from django.contrib.auth.decorators import login_required
+#
+# @login_required
+# def dashboard_view(request):
+#     # Your dashboard logic
+#     return render(request, 'account/dashboard.html') # Example template name

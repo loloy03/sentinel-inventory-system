@@ -41,4 +41,5 @@ urlpatterns = [
         ),
     ),
     path("search_key/", include("forms.urls")),
+    path("dashboard/", include("forms.urls"), name="dashboard"),
 ]
