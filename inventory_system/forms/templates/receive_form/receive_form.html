@@ -526,11 +526,11 @@
 
       // Send message to both iframes (only the visible one will process it)
       insideIframe.contentWindow.postMessage(
-        { type: "setQuantity", quantity: quantityValue },
+        { type: "setQuantity", quantity: quantityValue, operation: "add" },
         "*"
       );
       outsideIframe.contentWindow.postMessage(
-        { type: "setQuantity", quantity: quantityValue },
+        { type: "setQuantity", quantity: quantityValue, operation: "add" },
         "*"
       );
 
