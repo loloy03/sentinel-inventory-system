@@ -1,239 +1,355 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>QR Code Generator for Warehouse Items</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #c5d9a9;
-            min-height: 100vh;
-        }
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .form-container {
-            max-width: 800px;
-            margin: 0 auto;
-            background-color: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 5px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        input, select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        .quantity-container {
-            display: flex;
-            align-items: center;
-        }
-        .quantity-btn {
-            margin-left: 5px;
-            padding: 8px 12px;
-            background: #fff;
-            border: 1px solid #ccc;
-            cursor: pointer;
-        }
-        button {
-            background-color: #2c5e2e;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        #qrcode {
-            margin-top: 20px;
-            text-align: center;
-        }
-        #qrData {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #f5f5f5;
-            border-radius: 4px;
-            word-break: break-all;
-        }
-        #downloadBtn {
-            display: none;
-            margin-top: 10px;
-        }
-        .required-note {
-            margin-bottom: 15px;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 20px auto; /* Added top/bottom margin */
+        padding: 20px;
+        background-color: #e8f4d9; /* Slightly lighter green */
+        min-height: 100vh;
+      }
+      h1,
+      h2 {
+        text-align: center;
+        margin-bottom: 20px;
+        color: #3e7c3f; /* Darker green for titles */
+      }
+      .form-container {
+        max-width: 600px; /* Slightly narrower form for better readability */
+        margin: 0 auto;
+        background-color: #ffffff; /* White background for form */
+        padding: 25px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+      }
+      .form-group {
+        margin-bottom: 18px; /* Increased spacing */
+      }
+      label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: bold; /* Bold labels */
+        color: #555;
+      }
+      input[type="text"],
+      input[type="number"],
+      input[type="date"],
+      select {
+        width: 100%;
+        padding: 10px; /* Increased padding */
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box; /* Include padding in width */
+      }
+      .quantity-container {
+        display: flex;
+        align-items: center;
+      }
+      .quantity-container input {
+        flex-grow: 1; /* Allow input to take available space */
+      }
+      .quantity-btn {
+        margin-left: 8px; /* Increased spacing */
+        padding: 10px 14px; /* Adjusted padding */
+        background: #f0f0f0; /* Lighter button background */
+        border: 1px solid #ccc;
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 1em;
+      }
+      .quantity-btn:hover {
+        background: #e0e0e0;
+      }
+      button#generateBtn {
+        /* Specific style for generate button */
+        background-color: #4caf50; /* Standard green */
+        color: white;
+        padding: 12px 25px; /* Larger padding */
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        display: block; /* Make it block level */
+        width: 100%; /* Full width */
+        font-size: 1.1em;
+        margin-top: 10px; /* Space above button */
+      }
+      button#generateBtn:hover {
+        background-color: #45a049; /* Darker green on hover */
+      }
+      #qrcode {
+        margin-top: 25px;
+        text-align: center;
+        padding: 15px;
+        background-color: #f9f9f9; /* Light background for QR code area */
+        border-radius: 5px;
+        border: 1px solid #eee;
+        min-height: 100px; /* Ensure space even before generation */
+      }
+      #qrData {
+        margin-top: 15px;
+        padding: 10px;
+        background-color: #f0f0f0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        word-break: break-all;
+        font-family: monospace; /* Monospace font for code */
+        font-size: 0.9em;
+      }
+      #downloadBtn {
+        display: none; /* Hide initially */
+        background-color: #007bff; /* Blue download button */
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 15px;
+      }
+      #downloadBtn:hover {
+        background-color: #0056b3;
+      }
+      .required-note {
+        margin-bottom: 20px;
+        font-size: 0.9em;
+        color: #666;
+      }
+      /* Style for the canvas generated by qrious */
+      #qrcode canvas {
+        display: inline-block; /* Correct display for centering */
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>WAREHOUSE MANAGEMENT PORTAL</h1>
     <div class="form-container">
-        <h2>QR Code Generator for Warehouse Items</h2>
-        
-        <div class="form-group">
-            <label for="production_code">Production Code* (Enter a number)</label>
-            <input type="text" id="production_code" placeholder="e.g., 001-3-24S04" required>
+      <h2>QR Code Generator</h2>
+
+      <div class="form-group">
+        <label for="production_code">Production Code*</label>
+        <input
+          type="text"
+          id="production_code"
+          placeholder="e.g., 001-3-24S04"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="product">Product*</label>
+        <select id="product" required>
+          <option value="" selected disabled>Choose an option</option>
+          <option value="Trolley">Trolley</option>
+          <option value="Armchair">Armchair</option>
+          <option value="Pallets">Pallets</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="color">Color*</label>
+        <select id="color" required>
+          <option value="" selected disabled>Choose an option</option>
+          <option value="green">Green</option>
+          <option value="black">Black</option>
+          <option value="orange">Orange</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="status">Status*</label>
+        <select id="status" required>
+          <option value="" selected disabled>Choose an option</option>
+          <option value="NEW">NEW</option>
+          <option value="REFORMED">REFORMED</option>
+          <option value="DELIVERY">DELIVERY</option>
+          <option value="OTHER PROCESSES">OTHER PROCESSES</option>
+          <option value="REJECT">REJECT</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="quantity">Quantity*</label>
+        <div class="quantity-container">
+          <input type="number" id="quantity" value="1" min="0" required /> {/*
+          Default to 1? */}
+          <button
+            type="button"
+            class="quantity-btn"
+            onclick="decrementQuantity()"
+          >
+            -
+          </button>
+          <button
+            type="button"
+            class="quantity-btn"
+            onclick="incrementQuantity()"
+          >
+            +
+          </button>
         </div>
-        
-        <div class="form-group">
-            <label for="product">Product*</label>
-            <select id="product" required>
-                <option value="" selected disabled>Choose an option</option>
-                <option value="Trolley">Trolley</option>
-                <option value="Armchair">Armchair</option>
-                <option value="Pallets">Pallets</option>
-            </select>
-        </div>
-        
-        <div class="form-group">
-            <label for="color">Color*</label>
-            <select id="color" required>
-                <option value="" selected disabled>Choose an option</option>
-                <option value="green">Green</option>
-                <option value="black">Black</option>
-                <option value="orange">Orange</option>
-            </select>
-        </div>
-        
-        <div class="form-group">
-            <label for="status">Status*</label>
-            <select id="status" required>
-                <option value="" selected disabled>Choose an option</option>
-                <option value="NEW">NEW</option>
-                <option value="REFORMED">REFORMED</option>
-                <option value="DELIVERY">DELIVERY</option>
-                <option value="OTHER PROCESSES">OTHER PROCESSES</option>
-                <option value="REJECT">REJECT</option>
-            </select>
-        </div>
-        
-        <div class="form-group">
-            <label for="quantity">Quantity*</label>
-            <div class="quantity-container">
-                <input type="number" id="quantity" value="0" min="0" required>
-                <button type="button" class="quantity-btn" onclick="decrementQuantity()">-</button>
-                <button type="button" class="quantity-btn" onclick="incrementQuantity()">+</button>
-            </div>
-        </div>
-        
-        <div class="form-group">
-            <label for="pallet_position">Pallet Position No.*</label>
-            <input type="text" id="pallet_position" placeholder="e.g., 0040" required>
-        </div>
-        
-        <div class="form-group">
-            <label for="date">Date*</label>
-            <input type="date" id="date" required>
-        </div>
-        
-        <p class="required-note">*required</p>
-        
-        <button onclick="generateQR()">Generate QR Code</button>
-        
-        <div id="qrcode"></div>
-        <div id="qrData" style="display: none;"></div>
-        <div style="text-align: center;">
-            <button id="downloadBtn" onclick="downloadQR()">Download QR Code</button>
-        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="pallet_position">Pallet Position No.*</label>
+        <input
+          type="text"
+          id="pallet_position"
+          placeholder="e.g., 0040"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="date">Date*</label>
+        <input type="date" id="date" required />
+      </div>
+
+      <p class="required-note">*required fields</p>
+
+      <button id="generateBtn" onclick="generateQR()">Generate QR Code</button>
+
+      <div id="qrcode"></div>
+      <div id="qrData" style="display: none"></div>
+      <div style="text-align: center">
+        <button id="downloadBtn" onclick="downloadQR()">
+          Download QR Code
+        </button>
+      </div>
     </div>
 
     <script>
-        // Set default date to today
-        document.getElementById('date').valueAsDate = new Date();
-        
-        let qrcode = null;
-        
-        // Quantity functions
-        function incrementQuantity() {
-            var quantityInput = document.getElementById('quantity');
-            quantityInput.value = parseInt(quantityInput.value) + 1;
+      // Set default date to today
+      document.getElementById("date").valueAsDate = new Date();
+
+      // Quantity functions (remain the same)
+      function incrementQuantity() {
+        const quantityInput = document.getElementById("quantity");
+        quantityInput.value = parseInt(quantityInput.value, 10) + 1;
+      }
+
+      function decrementQuantity() {
+        const quantityInput = document.getElementById("quantity");
+        const currentValue = parseInt(quantityInput.value, 10);
+        if (currentValue > 0) {
+          // Prevent going below 0
+          quantityInput.value = currentValue - 1;
         }
-        
-        function decrementQuantity() {
-            var quantityInput = document.getElementById('quantity');
-            var currentValue = parseInt(quantityInput.value);
-            if (currentValue > 0) {
-                quantityInput.value = currentValue - 1;
-            }
+      }
+
+      // Store the qrious instance
+      let qrInstance = null;
+
+      function generateQR() {
+        const production_code = document
+          .getElementById("production_code")
+          .value.trim();
+        const product = document.getElementById("product").value;
+        const color = document.getElementById("color").value;
+        const status = document.getElementById("status").value;
+        const quantity = document.getElementById("quantity").value; // Keep as string, parsing happens on scan side if needed
+        const pallet_position = document
+          .getElementById("pallet_position")
+          .value.trim();
+        const date = document.getElementById("date").value;
+
+        // Simple validation
+        if (
+          !production_code ||
+          !product ||
+          !color ||
+          !status ||
+          quantity === "" ||
+          parseInt(quantity, 10) < 0 ||
+          !pallet_position ||
+          !date
+        ) {
+          alert(
+            "Please fill all required fields correctly (Quantity cannot be negative)."
+          );
+          return;
         }
-        
-        function generateQR() {
-            const production_code = document.getElementById('production_code').value;
-            const product = document.getElementById('product').value;
-            const color = document.getElementById('color').value;
-            const status = document.getElementById('status').value;
-            const quantity = document.getElementById('quantity').value;
-            const pallet_position = document.getElementById('pallet_position').value;
-            const date = document.getElementById('date').value;
-            
-            if (!production_code || !product || !color || !status || !quantity || !pallet_position || !date) {
-                alert('Please fill all required fields');
-                return;
-            }
-            
-            // Create data object
-            const data = {
-                production_code: production_code,
-                product: product,
-                color: color,
-                status: status,
-                quantity: quantity,
-                pallet_position: pallet_position,
-                date: date
-            };
-            
-            const jsonData = JSON.stringify(data);
-            
-            // Display the JSON data
-            const qrDataDiv = document.getElementById('qrData');
-            qrDataDiv.textContent = jsonData;
-            qrDataDiv.style.display = 'block';
-            
-            // Clear previous QR code
-            const qrcodeDiv = document.getElementById('qrcode');
-            qrcodeDiv.innerHTML = '';
-            
-            // Generate new QR code
-            qrcode = new QRCode(qrcodeDiv, {
-                text: jsonData,
-                width: 256,
-                height: 256,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
-            
-            // Show download button
-            document.getElementById('downloadBtn').style.display = 'inline-block';
+
+        // Create data object - Keys MUST match what your scanner code expects
+        const data = {
+          production_code: production_code,
+          product: product, // This key should match the expected key in onScanSuccess
+          color: color,
+          status: status,
+          quantity: quantity, // Send as string from form, let scanner parse if needed
+          pallet_position: pallet_position,
+          date: date, // Format YYYY-MM-DD
+        };
+
+        let jsonData;
+        try {
+          jsonData = JSON.stringify(data);
+        } catch (error) {
+          console.error("Error stringifying data:", error);
+          alert("Could not create QR code data. Check input values.");
+          return;
         }
-        
-        function downloadQR() {
-            if (!qrcode) return;
-            
-            // Get the canvas element
-            const canvas = document.querySelector('#qrcode canvas');
-            
-            // Convert to data URL
-            const dataUrl = canvas.toDataURL('image/png');
-            
-            // Create download link
-            const link = document.createElement('a');
-            link.download = 'warehouse-item-qr.png';
-            link.href = dataUrl;
-            link.click();
+
+        // Display the JSON data (for debugging)
+        const qrDataDiv = document.getElementById("qrData");
+        qrDataDiv.textContent = jsonData;
+        qrDataDiv.style.display = "block";
+
+        // Clear previous QR code (canvas)
+        const qrcodeDiv = document.getElementById("qrcode");
+        qrcodeDiv.innerHTML = ""; // Clear previous canvas/img
+        const qrCanvas = document.createElement("canvas"); // Create canvas for qrious
+        qrCanvas.id = "qrCanvas"; // Give it an ID for download function
+        qrcodeDiv.appendChild(qrCanvas);
+
+        // Generate new QR code using qrious
+        try {
+          qrInstance = new QRious({
+            element: qrCanvas, // Use the created canvas
+            value: jsonData,
+            size: 256, // Adjust size as needed
+            level: "H", // Error correction level (L, M, Q, H)
+            background: "#ffffff", // White background
+            foreground: "#000000", // Black foreground
+          });
+
+          // Show download button
+          document.getElementById("downloadBtn").style.display = "inline-block";
+        } catch (error) {
+          console.error("Error generating QR code:", error);
+          alert("Failed to generate QR code.");
+          qrcodeDiv.innerHTML = "Error generating QR code."; // Display error message
+          document.getElementById("downloadBtn").style.display = "none"; // Hide download button
         }
+      }
+
+      function downloadQR() {
+        const canvas = document.getElementById("qrCanvas"); // Select the specific canvas
+        if (!canvas) {
+          alert("Please generate a QR code first.");
+          return;
+        }
+
+        // Convert canvas to data URL
+        const dataUrl = canvas.toDataURL("image/png");
+
+        // Create download link
+        const link = document.createElement("a");
+        // Create a filename based on product/code
+        const product = document.getElementById("product").value || "item";
+        const code = document.getElementById("production_code").value || "code";
+        link.download = `QR_${product}_${code}.png`; // Suggest a filename
+        link.href = dataUrl;
+
+        // Trigger download
+        document.body.appendChild(link); // Required for Firefox
+        link.click();
+        document.body.removeChild(link); // Clean up
+      }
     </script>
-</body>
+  </body>
 </html>
