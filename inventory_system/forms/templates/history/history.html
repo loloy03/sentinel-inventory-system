@@ -1,18 +1,52 @@
 {% extends "base.html" %} {% load static %} {% block content %}
 <head>
   <link rel="stylesheet" href="{% static 'css/forms_styles.css' %}" />
-
-  {# --- ADD THIS STYLE BLOCK --- #}
   <style>
-    /* Override container width specifically for the history page */
+    /* Override container width */
     .container {
-      max-width: 95%; /* Use a large percentage or 'none' for full width */
-      /* Adjust margin if needed, e.g., margin: 10px auto; */
+      max-width: 95%;
     }
-
     .form-container {
       max-width: none;
     }
+
+    .status-badge {
+      padding: 3px 8px; /* Padding around the text */
+      border-radius: 4px; /* Slightly rounded corners */
+      color: #333; /* Default text color, will be overridden */
+      font-weight: bold;
+      display: inline-block; /* Allows padding and border-radius */
+      text-align: center;
+      font-size: 0.85em; /* Slightly smaller font */
+      white-space: nowrap; /* Prevent wrapping if possible */
+    }
+    .status-new {
+      background-color: #d4edda; /* Light green */
+      color: #155724; /* Dark green text */
+      border: 1px solid #c3e6cb;
+    }
+    .status-reformed {
+      background-color: #cce5ff; /* Light blue */
+      color: #004085; /* Dark blue text */
+      border: 1px solid #b8daff;
+    }
+    .status-delivery {
+      background-color: #fff3cd; /* Light yellow */
+      color: #856404; /* Dark yellow text */
+      border: 1px solid #ffeeba;
+    }
+    .status-other {
+      /* For OTHER PROCESSES */
+      background-color: #e2e3e5; /* Light gray */
+      color: #383d41; /* Dark gray text */
+      border: 1px solid #d6d8db;
+    }
+    .status-reject {
+      background-color: #f8d7da; /* Light red */
+      color: #721c24; /* Dark red text */
+      border: 1px solid #f5c6cb;
+    }
+    /* --- End of status classes --- */
 
     /* Existing table and pagination styles */
     .history-table {
@@ -21,7 +55,6 @@
       margin-top: 20px;
       font-size: 0.9rem;
     }
-    /* ... other styles from previous version ... */
     .history-table th,
     .history-table td {
       border: 1px solid #ddd;
@@ -78,13 +111,10 @@
       border-color: #ddd;
     }
   </style>
-  {# --- END OF ADDED STYLE BLOCK --- #}
 </head>
 
 <div class="container">
-  {# This container will now use the overridden max-width #}
   <div class="form-container">
-    {# This might also need override if it limits width #}
     <h2 class="form-title">{{ title|default:"Stock Transaction History" }}</h2>
 
     {% if page_obj.object_list %}
@@ -100,6 +130,7 @@
             <th>Pallet Pos.</th>
             <th>Warehouse ID</th>
             <th>Status</th>
+            {# Header remains the same #}
             <th>User</th>
             <th>Form Date</th>
           </tr>
@@ -118,7 +149,15 @@
             <td>{{ record.color }}</td>
             <td>{{ record.pallet_position }}</td>
             <td>{{ record.warehouse_id }}</td>
-            <td>{{ record.status }}</td>
+            {# --- MODIFIED CELL for Status --- #}
+            <td>
+              <span
+                class="status-badge {% if record.status == 'NEW' %} status-new {% elif record.status == 'REFORMED' %} status-reformed {% elif record.status == 'DELIVERY' %} status-delivery {% elif record.status == 'OTHER PROCESSES' %} status-other {% elif record.status == 'REJECT' %} status-reject {% endif %}"
+              >
+                {{ record.status }}
+              </span>
+            </td>
+            {# --- END OF MODIFIED CELL --- #}
             <td>{{ record.user.username|default:"--" }}</td>
             <td>{{ record.date_of_transaction|date:"Y-m-d" }}</td>
           </tr>
